@@ -33,7 +33,10 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glad)
 
 # ---- App ----
-add_executable(glfw_template main.cpp)
+add_executable(glfw_template
+  main.cpp
+  hopfield_widget.cpp
+)
 
 # glad provides target glad, glfw provides glfw
 target_link_libraries(glfw_template PRIVATE glfw glad)

@@ -1,14 +1,13 @@
-#pragma once
+#ifndef MATH_HELPERS
+#define MATH_HELPERS
 
 #include <cmath>
 
-struct Mat4
-{
+struct Mat4 {
     float m[16];
 };
 
-inline Mat4 mat4_identity()
-{
+inline Mat4 mat4_identity() {
     Mat4 r{};
     r.m[0] = 1.0f;
     r.m[5] = 1.0f;
@@ -17,13 +16,10 @@ inline Mat4 mat4_identity()
     return r;
 }
 
-inline Mat4 mat4_mul(const Mat4& a, const Mat4& b)
-{
+inline Mat4 mat4_mul(const Mat4& a, const Mat4& b) {
     Mat4 r{};
-    for (int c = 0; c < 4; ++c)
-    {
-        for (int rrow = 0; rrow < 4; ++rrow)
-        {
+    for (int c = 0; c < 4; ++c) {
+        for (int rrow = 0; rrow < 4; ++rrow) {
             r.m[c * 4 + rrow] =
                 a.m[0 * 4 + rrow] * b.m[c * 4 + 0] +
                 a.m[1 * 4 + rrow] * b.m[c * 4 + 1] +
@@ -34,8 +30,7 @@ inline Mat4 mat4_mul(const Mat4& a, const Mat4& b)
     return r;
 }
 
-inline Mat4 mat4_translate(float x, float y, float z)
-{
+inline Mat4 mat4_translate(float x, float y, float z) {
     Mat4 r = mat4_identity();
     r.m[12] = x;
     r.m[13] = y;
@@ -43,8 +38,7 @@ inline Mat4 mat4_translate(float x, float y, float z)
     return r;
 }
 
-inline Mat4 mat4_rotate_axis_angle(float angleRad, float ax, float ay, float az)
-{
+inline Mat4 mat4_rotate_axis_angle(float angleRad, float ax, float ay, float az) {
     float len = std::sqrt(ax * ax + ay * ay + az * az);
     if (len <= 0.0f) return mat4_identity();
     ax /= len;
@@ -78,8 +72,7 @@ inline Mat4 mat4_rotate_axis_angle(float angleRad, float ax, float ay, float az)
     return r;
 }
 
-inline Mat4 mat4_perspective(float fovYRad, float aspect, float zNear, float zFar)
-{
+inline Mat4 mat4_perspective(float fovYRad, float aspect, float zNear, float zFar) {
     Mat4 r{};
     float f = 1.0f / std::tan(fovYRad * 0.5f);
     r.m[0] = f / aspect;
@@ -89,3 +82,5 @@ inline Mat4 mat4_perspective(float fovYRad, float aspect, float zNear, float zFa
     r.m[14] = (2.0f * zFar * zNear) / (zNear - zFar);
     return r;
 }
+
+#endif // MATH_HELPERS
