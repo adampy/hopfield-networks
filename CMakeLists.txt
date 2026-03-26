@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(glfw_template LANGUAGES C CXX)
+project(hopfield_networks LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -34,7 +34,7 @@ FetchContent_MakeAvailable(glad)
 
 # ---- App setup here ----
 
-add_executable(glfw_template
+add_executable(hopfield_networks
   # Root level
   main.cpp
   config.hpp
@@ -44,8 +44,10 @@ add_executable(glfw_template
   helpers/math_helpers.hpp
   helpers/opengl_helpers.hpp
 
+  # Hopfield
+  hopfield/hopfield_network.hpp
+
   # UI widgets
-  ui/hopfield_network.hpp
   ui/hopfield_widget.cpp
   ui/hopfield_widget.hpp
 
@@ -67,9 +69,10 @@ add_executable(glfw_template
   imgui/imstb_truetype.h
 )
 
-target_include_directories(glfw_template PRIVATE
+target_include_directories(hopfield_networks PRIVATE
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/ui
+  ${CMAKE_SOURCE_DIR}/hopfield
   ${CMAKE_SOURCE_DIR}/helpers
   ${CMAKE_SOURCE_DIR}/imgui
 )
@@ -77,9 +80,9 @@ target_include_directories(glfw_template PRIVATE
 # ----- More setup below -----
 
 # glad provides target glad, glfw provides glfw
-target_link_libraries(glfw_template PRIVATE glfw glad)
+target_link_libraries(hopfield_networks PRIVATE glfw glad)
 
 # On some Linux distros you may need explicit link to dl
 if(UNIX AND NOT APPLE)
-  target_link_libraries(glfw_template PRIVATE dl)
+  target_link_libraries(hopfield_networks PRIVATE dl)
 endif()

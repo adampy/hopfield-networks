@@ -3,7 +3,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "hopfield_network.hpp"
+#include "hopfield/hopfield_network.hpp"
 
 class HopfieldWidget {
 public:

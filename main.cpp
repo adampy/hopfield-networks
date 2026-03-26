@@ -1,7 +1,8 @@
 #include <iostream>
 #include "config.hpp"
-#include "ui/hopfield_widget.hpp"
 
+#include "hopfield/hopfield_network.hpp"
+#include "ui/hopfield_widget.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"

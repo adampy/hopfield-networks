@@ -2,4 +2,4 @@
 
 cmake -S . -B build &&
 cmake --build build -j &&
-./build/glfw_template
+./build/hopfield_networks

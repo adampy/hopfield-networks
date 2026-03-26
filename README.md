@@ -16,4 +16,4 @@ chmod +x build_and_run.sh
 ```
 
 ## Development
-For new files (`.cpp` always, `.hpp` is not *required* but encouraged), make sure to put them in the `CMakeLists.txt` under `add_executable(glfw_template ...`
+For new files (`.cpp` always, `.hpp` is not *required* but encouraged), make sure to put them in the `CMakeLists.txt` under `add_executable(hopfield_networks ...`

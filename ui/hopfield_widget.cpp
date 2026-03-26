@@ -2,7 +2,7 @@
 #include <random>
 #include <string>
 
-#include "ui/hopfield_network.hpp"
+#include "hopfield/hopfield_network.hpp"
 #include "helpers/opengl_helpers.hpp"
 #include "helpers/file_helpers.hpp"
 #include "ui/hopfield_widget.hpp"
