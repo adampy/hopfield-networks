@@ -1,6 +1,8 @@
 #ifndef OPENGL_HELPERS
 #define OPENGL_HELPERS
 
+#include <glad/glad.h>
+
 /**
  * Helper function for compiling a shader from source code.
  * Returns the shader ID, or 0 if compilation fails.

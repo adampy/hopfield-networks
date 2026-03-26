@@ -6,7 +6,7 @@
 
 class HopfieldWidget {
 public:
-    HopfieldWidget(int x, int y, int width, int height);
+    HopfieldWidget(int rows, int cols, int x, int y, int width, int height);
 
     bool init_gl();
     void shutdown_gl();
@@ -24,6 +24,9 @@ private:
     };
 
     static void set_instance_color_from_state(int s, RenderInstance& ri);
+
+    int mRows = 0;
+    int mCols = 0;
 
     int mX = 0;
     int mY = 0;

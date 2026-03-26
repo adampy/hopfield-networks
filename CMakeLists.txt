@@ -32,11 +32,30 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glad)
 
-# ---- App ----
+# ---- App setup here ----
+
 add_executable(glfw_template
+  # Root level
   main.cpp
-  hopfield_widget.cpp
+  config.hpp
+
+  # Helpers
+  helpers/file_helpers.hpp
+  helpers/math_helpers.hpp
+  helpers/opengl_helpers.hpp
+
+  # UI widgets
+  ui/hopfield_widget.cpp
+  ui/hopfield_widget.hpp
 )
+
+target_include_directories(glfw_template PRIVATE
+  ${CMAKE_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/ui
+  ${CMAKE_SOURCE_DIR}/helpers
+)
+
+# ----- More setup below -----
 
 # glad provides target glad, glfw provides glfw
 target_link_libraries(glfw_template PRIVATE glfw glad)

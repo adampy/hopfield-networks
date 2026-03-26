@@ -1,17 +1,19 @@
 #include <iostream>
 #include <random>
 #include <string>
-#include "hopfield_widget.hpp"
-#include "opengl_helpers.hpp"
-#include "file_helpers.hpp"
+
+#include "helpers/opengl_helpers.hpp"
+#include "helpers/file_helpers.hpp"
+#include "ui/hopfield_widget.hpp"
 
 
-HopfieldWidget::HopfieldWidget(int x, int y, int width, int height)
-    : mX(x), mY(y), mWidth(width), mHeight(height) {
+HopfieldWidget::HopfieldWidget(int rows, int cols, int x, int y, int width, int height)
+    : mRows(rows), mCols(cols), mX(x), mY(y),
+    mWidth(width), mHeight(height) {
 
     int idx = 0;
-    for (int gy = 0; gy < 8; ++gy) {
-        for (int gx = 0; gx < 8; ++gx) {
+    for (int gy = 0; gy < mRows; ++gy) {
+        for (int gx = 0; gx < mCols; ++gx) {
             const float fx = -0.875f + static_cast<float>(gx) * 0.25f;
             const float fy =  0.875f - static_cast<float>(gy) * 0.25f;
             mInstances[idx] = -1;
@@ -109,7 +111,7 @@ void HopfieldWidget::draw(int fbWidth, int fbHeight) {
     glUniform1f(uScale, mScale);
 
     glBindVertexArray(mVao);
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0, 64);
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0, mRows * mCols);
     glBindVertexArray(0);
 
     glDisable(GL_SCISSOR_TEST);
@@ -130,7 +132,7 @@ void HopfieldWidget::on_mouse_button(GLFWwindow* window, int button, int action,
 
     int bestIdx = -1;
     float bestD2 = mRadius * mRadius;
-    for (int i = 0; i < 64; ++i) {
+    for (int i = 0; i < mRows * mCols; ++i) {
         const float dx = xNdc - mRenderInstances[i].cx;
         const float dy = yNdc - mRenderInstances[i].cy;
         const float d2 = dx * dx + dy * dy;

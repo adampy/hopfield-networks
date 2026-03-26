@@ -1,5 +1,6 @@
 #include <iostream>
-#include "hopfield_widget.hpp"
+#include "config.hpp"
+#include "ui/hopfield_widget.hpp"
 
 static void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -34,11 +35,7 @@ int main() {
 #endif
 
     // Make GLFW window
-    const int WIDTH = 1280;
-    const int HEIGHT = 720;
-    const constexpr char* title = "GLFW Template";
-
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, title, nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(Config::WIDTH, Config::HEIGHT, Config::TITLE, nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
@@ -57,12 +54,12 @@ int main() {
     }
 
     // Initial viewport
-    glViewport(0, 0, WIDTH, HEIGHT);
+    glViewport(0, 0, Config::WIDTH, Config::HEIGHT);
 
     // Optional: enable vsync (1 = on, 0 = off)
     glfwSwapInterval(1);
 
-    HopfieldWidget widget(20, 20, 640, 640);
+    HopfieldWidget widget(3, 5, 20, 20, 640, 640);
     if (!widget.init_gl()) {
         std::cerr << "Failed to create shader program\n";
         glfwDestroyWindow(window);
