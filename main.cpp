@@ -86,6 +86,7 @@ int main() {
     int rows = 5;
     bool shouldDrawNetwork = false;
     HopfieldWidget* widget = nullptr;
+    HopfieldNetwork* network = nullptr;
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
@@ -100,7 +101,7 @@ int main() {
         int fbW = 0, fbH = 0;
         glfwGetFramebufferSize(window, &fbW, &fbH);
         
-        if (widget != nullptr && shouldDrawNetwork) {
+        if (widget != nullptr && network != nullptr && shouldDrawNetwork) {
             widget->draw(fbW, fbH);
         }
 
@@ -114,15 +115,21 @@ int main() {
         ImGui::SliderInt("Columns", &cols, 1, 10);
         ImGui::SliderInt("Rows", &rows, 1, 10);
         if (ImGui::Button("Initialise Network")) {
-            // Delete exisiting
+            // Delete exisiting widget
             if (widget != nullptr) {
                 widget->shutdown_gl();
                 delete widget;
                 shouldDrawNetwork = false;
+                widget = nullptr;
+            }
+            if (network != nullptr) {
+                delete network;
+                network = nullptr;
             }
 
             // Make new network
-            widget = new HopfieldWidget(rows, cols, 20, 20, 640, 640);
+            network = new HopfieldNetwork(rows, cols);
+            widget = new HopfieldWidget(*network, 20, 20, 640, 640);
             if (!widget->init_gl()) {
                 std::cerr << "Failed to create shader program\n";
                 glfwDestroyWindow(window);

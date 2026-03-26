@@ -3,39 +3,33 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "hopfield_network.hpp"
 
 class HopfieldWidget {
 public:
-    HopfieldWidget(int rows, int cols, int x, int y, int width, int height);
+    HopfieldWidget(HopfieldNetwork& data, int x, int y, int width, int height);
 
     bool init_gl();
     void shutdown_gl();
-
     void draw(int fbWidth, int fbHeight);
     void on_mouse_button(GLFWwindow* window, int button, int action, int mods);
 
 private:
     struct RenderInstance {
-        float cx;
-        float cy;
-        float r;
-        float g;
-        float b;
+        float cx, cy;
+        float r, g, b;
     };
+
+    void update_render_instances();
 
     static void set_instance_color_from_state(int s, RenderInstance& ri);
 
-    int mRows = 0;
-    int mCols = 0;
+    HopfieldNetwork& mData;
 
-    int mX = 0;
-    int mY = 0;
-    int mWidth = 1;
-    int mHeight = 1;
+    int mX, mY, mWidth, mHeight;
     float mScale = 0.18f;
     float mRadius = 0.18f * 0.5f;
 
-    int mInstances[64]{};
     RenderInstance mRenderInstances[64]{};
 
     GLuint mProgram = 0;

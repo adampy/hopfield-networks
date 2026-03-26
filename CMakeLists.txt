@@ -45,6 +45,7 @@ add_executable(glfw_template
   helpers/opengl_helpers.hpp
 
   # UI widgets
+  ui/hopfield_network.hpp
   ui/hopfield_widget.cpp
   ui/hopfield_widget.hpp
 

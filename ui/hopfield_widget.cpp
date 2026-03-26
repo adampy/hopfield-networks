@@ -2,26 +2,39 @@
 #include <random>
 #include <string>
 
+#include "ui/hopfield_network.hpp"
 #include "helpers/opengl_helpers.hpp"
 #include "helpers/file_helpers.hpp"
 #include "ui/hopfield_widget.hpp"
 
 
-HopfieldWidget::HopfieldWidget(int rows, int cols, int x, int y, int width, int height)
-    : mRows(rows), mCols(cols), mX(x), mY(y),
-    mWidth(width), mHeight(height) {
+HopfieldWidget::HopfieldWidget(HopfieldNetwork& data, int x, int y, int width, int height)
+    : mData(data), mX(x), mY(y), mWidth(width), mHeight(height) {
 
+    // initialize render instances from external data
     int idx = 0;
-    for (int gy = 0; gy < mRows; ++gy) {
-        for (int gx = 0; gx < mCols; ++gx) {
+    for (int gy = 0; gy < mData.rows(); ++gy) {
+        for (int gx = 0; gx < mData.cols(); ++gx) {
             const float fx = -0.875f + static_cast<float>(gx) * 0.25f;
             const float fy =  0.875f - static_cast<float>(gy) * 0.25f;
-            mInstances[idx] = -1;
+
             mRenderInstances[idx] = RenderInstance{ fx, fy, 0.0f, 0.0f, 0.0f };
-            set_instance_color_from_state(-1, mRenderInstances[idx]);
+            set_instance_color_from_state(mData.at(gy, gx), mRenderInstances[idx]);
             ++idx;
         }
     }
+}
+
+void HopfieldWidget::update_render_instances() {
+    for (int gy = 0; gy < mData.rows(); ++gy) {
+        for (int gx = 0; gx < mData.cols(); ++gx) {
+            int idx = gy * mData.cols() + gx;
+            set_instance_color_from_state(mData.at(gy, gx), mRenderInstances[idx]);
+        }
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, mInstanceVbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(mRenderInstances), mRenderInstances);
 }
 
 bool HopfieldWidget::init_gl() {
@@ -111,7 +124,7 @@ void HopfieldWidget::draw(int fbWidth, int fbHeight) {
     glUniform1f(uScale, mScale);
 
     glBindVertexArray(mVao);
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0, mRows * mCols);
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0, mData.rows() * mData.cols());
     glBindVertexArray(0);
 
     glDisable(GL_SCISSOR_TEST);
@@ -120,22 +133,20 @@ void HopfieldWidget::draw(int fbWidth, int fbHeight) {
 void HopfieldWidget::on_mouse_button(GLFWwindow* window, int button, int action, int mods) {
     if (button != GLFW_MOUSE_BUTTON_LEFT || action != GLFW_PRESS) return;
 
-    double mx = 0.0, my = 0.0;
+    double mx, my;
     glfwGetCursorPos(window, &mx, &my);
 
-    if (mx < static_cast<double>(mX) || mx >= static_cast<double>(mX + mWidth) ||
-        my < static_cast<double>(mY) || my >= static_cast<double>(mY + mHeight))
-        return;
+    if (mx < mX || mx >= mX + mWidth || my < mY || my >= mY + mHeight) return;
 
-    const float xNdc = static_cast<float>(((mx - static_cast<double>(mX)) / static_cast<double>(mWidth)) * 2.0 - 1.0);
-    const float yNdc = static_cast<float>(1.0 - ((my - static_cast<double>(mY)) / static_cast<double>(mHeight)) * 2.0);
+    float xNdc = ((mx - mX) / mWidth) * 2.0f - 1.0f;
+    float yNdc = 1.0f - ((my - mY) / mHeight) * 2.0f;
 
     int bestIdx = -1;
     float bestD2 = mRadius * mRadius;
-    for (int i = 0; i < mRows * mCols; ++i) {
-        const float dx = xNdc - mRenderInstances[i].cx;
-        const float dy = yNdc - mRenderInstances[i].cy;
-        const float d2 = dx * dx + dy * dy;
+    for (int i = 0; i < mData.rows() * mData.cols(); ++i) {
+        float dx = xNdc - mRenderInstances[i].cx;
+        float dy = yNdc - mRenderInstances[i].cy;
+        float d2 = dx*dx + dy*dy;
         if (d2 <= bestD2) {
             bestD2 = d2;
             bestIdx = i;
@@ -144,15 +155,15 @@ void HopfieldWidget::on_mouse_button(GLFWwindow* window, int button, int action,
 
     if (bestIdx < 0) return;
 
-    mInstances[bestIdx] = -mInstances[bestIdx];
-    set_instance_color_from_state(mInstances[bestIdx], mRenderInstances[bestIdx]);
+    // flip external data
+    int row = bestIdx / mData.cols();
+    int col = bestIdx % mData.cols();
+    mData.at(row, col) = -mData.at(row, col);
+
+    set_instance_color_from_state(mData.at(row, col), mRenderInstances[bestIdx]);
 
     glBindBuffer(GL_ARRAY_BUFFER, mInstanceVbo);
-    glBufferSubData(
-        GL_ARRAY_BUFFER,
-        static_cast<GLintptr>(bestIdx * static_cast<int>(sizeof(RenderInstance))),
-        static_cast<GLsizeiptr>(sizeof(RenderInstance)),
-        &mRenderInstances[bestIdx]);
+    glBufferSubData(GL_ARRAY_BUFFER, bestIdx * sizeof(RenderInstance), sizeof(RenderInstance), &mRenderInstances[bestIdx]);
 }
 
 void HopfieldWidget::set_instance_color_from_state(int s, RenderInstance& ri) {
