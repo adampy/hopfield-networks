@@ -3,6 +3,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <vector>
 #include "hopfield/hopfield_network.hpp"
 
 class HopfieldWidget {
@@ -30,7 +31,7 @@ private:
     float mScale = 0.18f;
     float mRadius = 0.18f * 0.5f;
 
-    RenderInstance mRenderInstances[64]{};
+    std::vector<RenderInstance> mRenderInstances = {};
 
     GLuint mProgram = 0;
     GLuint mVao = 0;

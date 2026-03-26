@@ -5,7 +5,7 @@ Tested on WSL2 (running Ubuntu 24.04 LTS)
 
 Install required graphics libs
 ```bash
-sudo apt-get update && sudo apt-get install -y libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+sudo apt-get update && sudo apt-get install -y libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
 ```
 
 ## Run

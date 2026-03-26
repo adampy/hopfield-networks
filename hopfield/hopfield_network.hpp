@@ -1,5 +1,5 @@
-#ifndef HOPFIELD_DATA
-#define HOPFIELD_DATA
+#ifndef HOPFIELD_NETWORK
+#define HOPFIELD_NETWORK
 
 #include <vector>
 
@@ -22,4 +22,4 @@ private:
     std::vector<int> mMatrix; // -1 or 1
 };
 
-#endif // HOPFIELD_DATA
+#endif // HOPFIELD_NETWORK
