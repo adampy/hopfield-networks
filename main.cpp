@@ -2,6 +2,10 @@
 #include "config.hpp"
 #include "ui/hopfield_widget.hpp"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 static void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
@@ -59,20 +63,29 @@ int main() {
     // Optional: enable vsync (1 = on, 0 = off)
     glfwSwapInterval(1);
 
-    HopfieldWidget widget(3, 5, 20, 20, 640, 640);
-    if (!widget.init_gl()) {
-        std::cerr << "Failed to create shader program\n";
-        glfwDestroyWindow(window);
-        glfwTerminate();
-        return 1;
-    }
-
     // Disable depth
     glDisable(GL_DEPTH_TEST);
 
     // Set widget mouse callback handler
-    glfwSetWindowUserPointer(window, &widget);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init("#version 330 core");
+
+    // State
+    int cols = 3;
+    int rows = 5;
+    bool shouldDrawNetwork = false;
+    HopfieldWidget* widget = nullptr;
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
@@ -86,7 +99,42 @@ int main() {
 
         int fbW = 0, fbH = 0;
         glfwGetFramebufferSize(window, &fbW, &fbH);
-        widget.draw(fbW, fbH);
+        
+        if (widget != nullptr && shouldDrawNetwork) {
+            widget->draw(fbW, fbH);
+        }
+
+        // ----- ImGUI -----
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::Begin("Hopfield Network");
+        ImGui::Text("This is a simple Hopfield network visualization.");
+        ImGui::Checkbox("Draw Network", &shouldDrawNetwork);
+        ImGui::SliderInt("Columns", &cols, 1, 10);
+        ImGui::SliderInt("Rows", &rows, 1, 10);
+        if (ImGui::Button("Initialise Network")) {
+            // Delete exisiting
+            if (widget != nullptr) {
+                widget->shutdown_gl();
+                delete widget;
+                shouldDrawNetwork = false;
+            }
+
+            // Make new network
+            widget = new HopfieldWidget(rows, cols, 20, 20, 640, 640);
+            if (!widget->init_gl()) {
+                std::cerr << "Failed to create shader program\n";
+                glfwDestroyWindow(window);
+                glfwTerminate();
+                return 1;
+            }
+            shouldDrawNetwork = true;
+            glfwSetWindowUserPointer(window, widget);
+        }
+        ImGui::End();
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Present frame buffer
         glfwSwapBuffers(window);
@@ -94,7 +142,14 @@ int main() {
     }
 
     // Shutdown
-    widget.shutdown_gl();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    if (widget != nullptr) {
+        widget->shutdown_gl();
+        delete widget;
+    }
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

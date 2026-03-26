@@ -47,12 +47,30 @@ add_executable(glfw_template
   # UI widgets
   ui/hopfield_widget.cpp
   ui/hopfield_widget.hpp
+
+  # imgui
+  imgui/imconfig.h
+  imgui/imgui_demo.cpp
+  imgui/imgui_draw.cpp
+  imgui/imgui_impl_glfw.cpp
+  imgui/imgui_impl_glfw.h
+  imgui/imgui_impl_opengl3.cpp
+  imgui/imgui_impl_opengl3.h
+  imgui/imgui_internal.h
+  imgui/imgui_tables.cpp
+  imgui/imgui_widgets.cpp
+  imgui/imgui.cpp
+  imgui/imgui.h
+  imgui/imstb_rectpack.h
+  imgui/imstb_textedit.h
+  imgui/imstb_truetype.h
 )
 
 target_include_directories(glfw_template PRIVATE
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/ui
   ${CMAKE_SOURCE_DIR}/helpers
+  ${CMAKE_SOURCE_DIR}/imgui
 )
 
 # ----- More setup below -----
