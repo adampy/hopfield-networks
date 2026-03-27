@@ -58,28 +58,20 @@ int main() {
         return 1;
     }
 
-    // Initial viewport
-    glViewport(0, 0, Config::WIDTH, Config::HEIGHT);
-
-    // Optional: enable vsync (1 = on, 0 = off)
-    glfwSwapInterval(1);
-
-    // Disable depth
-    glDisable(GL_DEPTH_TEST);
-
-    // Set widget mouse callback handler
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glViewport(0, 0, Config::WIDTH, Config::HEIGHT); // Initial viewport
+    glfwSwapInterval(1); // Optional: enable vsync (1 = on, 0 = off)
+    glDisable(GL_DEPTH_TEST); // Disable depth
+    glfwSetMouseButtonCallback(window, mouse_button_callback); // Set widget mouse callback handler
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplGlfw_InitForOpenGL(window, true); // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
     // State
@@ -112,34 +104,108 @@ int main() {
         ImGui::NewFrame();
         ImGui::Begin("Hopfield Network");
         ImGui::Text("This is a simple Hopfield network visualization.");
-        ImGui::Checkbox("Draw Network", &shouldDrawNetwork);
-        ImGui::SliderInt("Columns", &cols, 1, 10);
-        ImGui::SliderInt("Rows", &rows, 1, 10);
-        if (ImGui::Button("Initialise Network")) {
-            // Delete exisiting widget
-            if (widget != nullptr) {
-                widget->shutdown_gl();
-                delete widget;
-                shouldDrawNetwork = false;
-                widget = nullptr;
-            }
-            if (network != nullptr) {
-                delete network;
-                network = nullptr;
-            }
 
-            // Make new network
-            network = new HopfieldNetwork(rows, cols);
-            widget = new HopfieldWidget(*network, 20, 20, 640, 640);
-            if (!widget->init_gl()) {
-                std::cerr << "Failed to create shader program\n";
-                glfwDestroyWindow(window);
-                glfwTerminate();
-                return 1;
-            }
-            shouldDrawNetwork = true;
-            glfwSetWindowUserPointer(window, widget);
+        if (ImGui::CollapsingHeader("Display")) {
+            ImGui::Checkbox("Draw Network", &shouldDrawNetwork);
         }
+
+        if (ImGui::CollapsingHeader("Network")) {
+            // Load network button
+            if (network == nullptr) {
+                if (ImGui::Button("Load from state.hpf")) {
+                    const std::string filePath = "state.hpf";
+                    HopfieldNetwork loaded = HopfieldNetwork::fromFile(filePath);
+
+                    if (widget != nullptr) {
+                        widget->shutdown_gl();
+                        delete widget;
+                        widget = nullptr;
+                    }
+                    if (network != nullptr) {
+                        delete network;
+                        network = nullptr;
+                    }
+
+                    network = new HopfieldNetwork(std::move(loaded));
+                    rows = network->rows();
+                    cols = network->cols();
+
+                    widget = new HopfieldWidget(*network, 20, 20, 640, 640);
+                    if (!widget->init_gl()) {
+                        std::cerr << "Failed to create shader program\n";
+                        glfwDestroyWindow(window);
+                        glfwTerminate();
+                        return 1;
+                    }
+                    shouldDrawNetwork = true;
+                    glfwSetWindowUserPointer(window, widget);
+                }
+
+                ImGui::SliderInt("Columns", &cols, 1, 10);
+                ImGui::SliderInt("Rows", &rows, 1, 10);
+
+                if (ImGui::Button("Create Network")) {
+                    // Delete exisiting widget
+                    if (widget != nullptr) {
+                        widget->shutdown_gl();
+                        delete widget;
+                        widget = nullptr;
+                    }
+                    if (network != nullptr) {
+                        delete network;
+                        network = nullptr;
+                    }
+
+                    // Make new network
+                    network = new HopfieldNetwork(rows, cols);
+                    widget = new HopfieldWidget(*network, 20, 20, 640, 640);
+                    if (!widget->init_gl()) {
+                        std::cerr << "Failed to create shader program\n";
+                        glfwDestroyWindow(window);
+                        glfwTerminate();
+                        return 1;
+                    }
+                    shouldDrawNetwork = true;
+                    glfwSetWindowUserPointer(window, widget);
+                }
+            } else {
+                if (ImGui::Button("Save to state.hpf")) {
+                    network->saveToFile("state.hpf");
+                }
+                if (ImGui::Button("Clear Network")) {
+                    if (widget != nullptr) {
+                        widget->shutdown_gl();
+                        delete widget;
+                        widget = nullptr;
+                    }
+                    if (network != nullptr) {
+                        delete network;
+                        network = nullptr;
+                    }
+                }
+            }
+        }
+
+        if (ImGui::CollapsingHeader("Memories")) {
+            // If loaded, show memories and display button
+            if (network != nullptr) {
+                for (int i = 0; i < network->getMemories().size(); ++i) {
+                    const auto& memory = network->getMemories().at(i);
+                    if (ImGui::Button(("Set weights to memory " + std::to_string(i)).c_str())) {
+                        network->setWeights(memory);
+                        if (widget != nullptr) {
+                            widget->setDirty();
+                        }
+                    }
+                }
+
+                if (ImGui::Button("Save Weights as New Memory")) {
+                    const auto& weights = network->data();
+                    network->addMemory(weights);
+                }
+            }
+        }
+
         ImGui::End();
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

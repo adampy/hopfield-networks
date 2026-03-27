@@ -45,6 +45,7 @@ add_executable(hopfield_networks
   helpers/opengl_helpers.hpp
 
   # Hopfield
+  hopfield/hopfield_network.cpp
   hopfield/hopfield_network.hpp
 
   # UI widgets

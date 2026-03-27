@@ -26,7 +26,7 @@ HopfieldWidget::HopfieldWidget(HopfieldNetwork& data, int x, int y, int width, i
 }
 
 void HopfieldWidget::update_render_instances() {
-    for (int gy = 0; gy < mData.rows(); ++gy) {
+    for (int gy = 0; gy < mData.rows(); ++gy) { // todo: is this right?
         for (int gx = 0; gx < mData.cols(); ++gx) {
             int idx = gy * mData.cols() + gx;
             set_instance_color_from_state(mData.at(gy, gx), mRenderInstances.at(idx));
@@ -38,8 +38,8 @@ void HopfieldWidget::update_render_instances() {
 }
 
 bool HopfieldWidget::init_gl() {
-    const std::string vsSrcStr = read_text_file("shaders/hopfield_widget.vert");
-    const std::string fsSrcStr = read_text_file("shaders/hopfield_widget.frag");
+    const std::string vsSrcStr = readTextFile("shaders/hopfield_widget.vert");
+    const std::string fsSrcStr = readTextFile("shaders/hopfield_widget.frag");
 
     if (vsSrcStr.empty() || fsSrcStr.empty())
         return false;
@@ -110,6 +110,10 @@ void HopfieldWidget::shutdown_gl() {
 
 void HopfieldWidget::draw(int fbWidth, int fbHeight) {
     if (!mProgram || !mVao) return;
+    if (mIsDirty) {
+        update_render_instances();
+        mIsDirty = false;
+    }
 
     int vx = mX;
     int vy = fbHeight - (mY + mHeight);

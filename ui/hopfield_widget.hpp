@@ -14,6 +14,7 @@ public:
     void shutdown_gl();
     void draw(int fbWidth, int fbHeight);
     void on_mouse_button(GLFWwindow* window, int button, int action, int mods);
+    void setDirty() { mIsDirty = true; };
 
 private:
     struct RenderInstance {
@@ -38,6 +39,8 @@ private:
     GLuint mVbo = 0;
     GLuint mEbo = 0;
     GLuint mInstanceVbo = 0;
+
+    bool mIsDirty = true; // boolean as to whether the widget needs to be fully redrawn
 };
 
 #endif // HOPFIELD_WIDGET
