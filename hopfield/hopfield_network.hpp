@@ -3,37 +3,42 @@
 
 #include <vector>
 #include <string>
+#include "hopfield/IHopfieldNetwork.hpp"
 
-class HopfieldNetwork {
+/**
+ * Representation of a classical Hopfield network with weight matrix
+ * and associated memories.
+ 
+ * @author Adam Crawley
+ */
+class HopfieldNetwork : public IHopfieldNetwork {
 public:
-    using Memory = std::vector<int>;
-
     // Constructor with no data
     HopfieldNetwork(int rows, int cols)
         : mRows(rows), mCols(cols), mMatrix(rows * cols, -1) {}
 
     // Constructor with memories
-    HopfieldNetwork(int rows, int cols, const std::vector<Memory>& memories)
+    HopfieldNetwork(int rows, int cols, const std::vector<std::vector<int>>& memories)
         : mRows(rows), mCols(cols), mMatrix(rows * cols, -1), mMemories(memories) {}
 
     static HopfieldNetwork fromFile(const std::string& filename);
 
-    void saveToFile(const std::string& filename) const;
+    void saveToFile(const std::string& filename) const override;
 
-    int rows() const { return mRows; }
-    int cols() const { return mCols; }
+    int rows() const override { return mRows; }
+    int cols() const override { return mCols; }
 
-    int& at(int row, int col) { return mMatrix[row * mCols + col]; }
-    int at(int row, int col) const { return mMatrix[row * mCols + col]; }
+    int& at(int row, int col) override { return mMatrix[row * mCols + col]; }
+    int at(int row, int col) const override { return mMatrix[row * mCols + col]; }
 
-    std::vector<int>& data() { return mMatrix; }
-    const std::vector<int>& data() const { return mMatrix; }
+    std::vector<int>& data() override { return mMatrix; }
+    const std::vector<int>& data() const override { return mMatrix; }
 
-    const std::vector<std::vector<int>>& getMemories() const { return mMemories; }
+    const std::vector<std::vector<int>>& getMemories() const override { return mMemories; }
 
-    void addMemory(const std::vector<int>& memory) { mMemories.push_back(memory); }
+    void addMemory(const std::vector<int>& memory) override { mMemories.push_back(memory); }
 
-    void setWeights(const std::vector<int>& weights) { mMatrix = weights; }
+    void setWeights(const std::vector<int>& weights) override { mMatrix = weights; }
 
 private:
     int mRows, mCols;

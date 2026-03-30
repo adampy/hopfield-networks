@@ -1,35 +1,49 @@
+#include <algorithm>
 #include <iostream>
 #include <random>
 #include <string>
 
-#include "hopfield/hopfield_network.hpp"
+#include "hopfield/IHopfieldNetwork.hpp"
 #include "helpers/opengl_helpers.hpp"
 #include "helpers/file_helpers.hpp"
 #include "ui/hopfield_widget.hpp"
 
 
-HopfieldWidget::HopfieldWidget(HopfieldNetwork& data, int x, int y, int width, int height)
-    : mData(data), mX(x), mY(y), mWidth(width), mHeight(height) {
+HopfieldWidget::HopfieldWidget(IHopfieldNetwork& network, int x, int y, int width, int height)
+    : mNetwork(network), mX(x), mY(y), mWidth(width), mHeight(height), mBaseWidth(width), mBaseHeight(height) {
 
     // initialize render instances from external data
     int idx = 0;
-    for (int gy = 0; gy < mData.rows(); ++gy) {
-        for (int gx = 0; gx < mData.cols(); ++gx) {
+    for (int gy = 0; gy < mNetwork.rows(); ++gy) {
+        for (int gx = 0; gx < mNetwork.cols(); ++gx) {
             const float fx = -0.875f + static_cast<float>(gx) * 0.25f;
             const float fy =  0.875f - static_cast<float>(gy) * 0.25f;
 
             mRenderInstances.push_back(RenderInstance{ fx, fy, 0.0f, 0.0f, 0.0f });
-            set_instance_color_from_state(mData.at(gy, gx), mRenderInstances.back());
+            set_instance_color_from_state(mNetwork.at(gy, gx), mRenderInstances.back());
             ++idx;
         }
     }
 }
 
+void HopfieldWidget::setScale(float scale) {
+    if (scale <= 0.0f) return;
+
+    mWidth = static_cast<int>(static_cast<float>(mBaseWidth) * scale);
+    mHeight = static_cast<int>(static_cast<float>(mBaseHeight) * scale);
+
+    if (mWidth < 1) mWidth = 1;
+    if (mHeight < 1) mHeight = 1;
+
+    mScale = mBaseScale * scale;
+    mRadius = mScale * 0.5f;
+}
+
 void HopfieldWidget::update_render_instances() {
-    for (int gy = 0; gy < mData.rows(); ++gy) { // todo: is this right?
-        for (int gx = 0; gx < mData.cols(); ++gx) {
-            int idx = gy * mData.cols() + gx;
-            set_instance_color_from_state(mData.at(gy, gx), mRenderInstances.at(idx));
+    for (int gy = 0; gy < mNetwork.rows(); ++gy) {
+        for (int gx = 0; gx < mNetwork.cols(); ++gx) {
+            int idx = gy * mNetwork.cols() + gx;
+            set_instance_color_from_state(mNetwork.at(gy, gx), mRenderInstances.at(idx));
         }
     }
 
@@ -115,20 +129,43 @@ void HopfieldWidget::draw(int fbWidth, int fbHeight) {
         mIsDirty = false;
     }
 
-    int vx = mX;
-    int vy = fbHeight - (mY + mHeight);
-    if (vy < 0) vy = 0;
+    if (fbWidth <= 0 || fbHeight <= 0) return;
+
+    const int vx = mX;
+    const int vy = fbHeight - (mY + mHeight);
+
+    // The logical widget rect for UI hit testing uses top-left origin.
+    mDrawX = mX;
+    mDrawY = mY;
+    mDrawWidth = mWidth;
+    mDrawHeight = mHeight;
+
+    // Viewport is allowed to extend offscreen (to avoid scaling/squishing).
+    glViewport(vx, vy, mWidth, mHeight);
+
+    // Scissor must be inside framebuffer; clip to intersection.
+    const int sx0 = std::max(vx, 0);
+    const int sy0 = std::max(vy, 0);
+    const int sx1 = std::min(vx + mWidth, fbWidth);
+    const int sy1 = std::min(vy + mHeight, fbHeight);
+    const int sw = sx1 - sx0;
+    const int sh = sy1 - sy0;
+    if (sw <= 0 || sh <= 0) return;
 
     glEnable(GL_SCISSOR_TEST);
-    glViewport(vx, vy, mWidth, mHeight);
-    glScissor(vx, vy, mWidth, mHeight);
+    glScissor(sx0, sy0, sw, sh);
 
     glUseProgram(mProgram);
     GLint uScale = glGetUniformLocation(mProgram, "uScale");
     glUniform1f(uScale, mScale);
 
+    // Keep circles circular in non-square viewports
+    const float aspect = (mHeight != 0) ? (static_cast<float>(mWidth) / static_cast<float>(mHeight)) : 1.0f;
+    GLint uAspect = glGetUniformLocation(mProgram, "uAspect");
+    glUniform1f(uAspect, aspect);
+
     glBindVertexArray(mVao);
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0, mData.rows() * mData.cols());
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0, mNetwork.rows() * mNetwork.cols());
     glBindVertexArray(0);
 
     glDisable(GL_SCISSOR_TEST);
@@ -140,14 +177,15 @@ void HopfieldWidget::on_mouse_button(GLFWwindow* window, int button, int action,
     double mx, my;
     glfwGetCursorPos(window, &mx, &my);
 
-    if (mx < mX || mx >= mX + mWidth || my < mY || my >= mY + mHeight) return;
+    if (mDrawWidth <= 0 || mDrawHeight <= 0) return;
+    if (mx < mDrawX || mx >= mDrawX + mDrawWidth || my < mDrawY || my >= mDrawY + mDrawHeight) return;
 
-    float xNdc = ((mx - mX) / mWidth) * 2.0f - 1.0f;
-    float yNdc = 1.0f - ((my - mY) / mHeight) * 2.0f;
+    float xNdc = ((mx - mDrawX) / mDrawWidth) * 2.0f - 1.0f;
+    float yNdc = 1.0f - ((my - mDrawY) / mDrawHeight) * 2.0f;
 
     int bestIdx = -1;
     float bestD2 = mRadius * mRadius;
-    for (int i = 0; i < mData.rows() * mData.cols(); ++i) {
+    for (int i = 0; i < mNetwork.rows() * mNetwork.cols(); ++i) {
         float dx = xNdc - mRenderInstances.at(i).cx;
         float dy = yNdc - mRenderInstances.at(i).cy;
         float d2 = dx*dx + dy*dy;
@@ -160,11 +198,11 @@ void HopfieldWidget::on_mouse_button(GLFWwindow* window, int button, int action,
     if (bestIdx < 0) return;
 
     // flip external data
-    int row = bestIdx / mData.cols();
-    int col = bestIdx % mData.cols();
-    mData.at(row, col) = -mData.at(row, col);
+    int row = bestIdx / mNetwork.cols();
+    int col = bestIdx % mNetwork.cols();
+    mNetwork.at(row, col) = -mNetwork.at(row, col);
 
-    set_instance_color_from_state(mData.at(row, col), mRenderInstances.at(bestIdx));
+    set_instance_color_from_state(mNetwork.at(row, col), mRenderInstances.at(bestIdx));
 
     glBindBuffer(GL_ARRAY_BUFFER, mInstanceVbo);
     glBufferSubData(GL_ARRAY_BUFFER, bestIdx * sizeof(RenderInstance), sizeof(RenderInstance), &mRenderInstances.at(bestIdx));

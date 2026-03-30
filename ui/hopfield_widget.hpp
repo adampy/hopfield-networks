@@ -4,17 +4,23 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <vector>
-#include "hopfield/hopfield_network.hpp"
+#include "hopfield/IHopfieldNetwork.hpp"
 
+/**
+ * The UI widget in which a Hopfield network can be displayed.
+ * 
+ * @author Adam Crawley
+ */
 class HopfieldWidget {
 public:
-    HopfieldWidget(HopfieldNetwork& data, int x, int y, int width, int height);
+    HopfieldWidget(IHopfieldNetwork& network, int x, int y, int width, int height);
 
     bool init_gl();
     void shutdown_gl();
     void draw(int fbWidth, int fbHeight);
     void on_mouse_button(GLFWwindow* window, int button, int action, int mods);
     void setDirty() { mIsDirty = true; };
+    void setScale(float scale);
 
 private:
     struct RenderInstance {
@@ -26,9 +32,12 @@ private:
 
     static void set_instance_color_from_state(int s, RenderInstance& ri);
 
-    HopfieldNetwork& mData;
+    IHopfieldNetwork& mNetwork;
 
     int mX, mY, mWidth, mHeight;
+    int mBaseWidth, mBaseHeight;
+    int mDrawX = 0, mDrawY = 0, mDrawWidth = 0, mDrawHeight = 0;
+    float mBaseScale = 0.18f;
     float mScale = 0.18f;
     float mRadius = 0.18f * 0.5f;
 

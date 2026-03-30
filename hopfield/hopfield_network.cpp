@@ -29,7 +29,7 @@ HopfieldNetwork HopfieldNetwork::fromFile(const std::string& filename) {
     const int cols = std::stoi(header.substr(sep + 1));
 
     // Read in memories
-    std::vector<Memory> memories;
+    std::vector<std::vector<int>> memories;
     std::vector<int> data;
     data.reserve(static_cast<size_t>(rows * cols));
     for (int i = 1; i < lines.size(); ++i) {

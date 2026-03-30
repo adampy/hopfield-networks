@@ -47,6 +47,9 @@ add_executable(hopfield_networks
   # Hopfield
   hopfield/hopfield_network.cpp
   hopfield/hopfield_network.hpp
+  hopfield/IHopfieldNetwork.hpp
+  hopfield/simulation_state.cpp
+  hopfield/simulation_state.hpp
 
   # UI widgets
   ui/hopfield_widget.cpp
