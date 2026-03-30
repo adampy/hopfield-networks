@@ -18,9 +18,18 @@ static void process_input(GLFWwindow* window) {
 }
 
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if (ImGui::GetIO().WantCaptureMouse) return;
     HopfieldWidget* widget = static_cast<HopfieldWidget*>(glfwGetWindowUserPointer(window));
     if (widget != nullptr) {
         widget->on_mouse_button(window, button, action, mods);
+    }
+}
+
+static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (ImGui::GetIO().WantCaptureMouse) return;
+    HopfieldWidget* widget = static_cast<HopfieldWidget*>(glfwGetWindowUserPointer(window));
+    if (widget != nullptr) {
+        widget->on_cursor_pos(window, xpos, ypos);
     }
 }
 
@@ -63,6 +72,7 @@ int main() {
     glfwSwapInterval(1); // Optional: enable vsync (1 = on, 0 = off)
     glDisable(GL_DEPTH_TEST); // Disable depth
     glfwSetMouseButtonCallback(window, mouse_button_callback); // Set widget mouse callback handler
+    glfwSetCursorPosCallback(window, cursor_pos_callback);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();

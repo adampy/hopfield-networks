@@ -19,6 +19,7 @@ public:
     void shutdown_gl();
     void draw(int fbWidth, int fbHeight);
     void on_mouse_button(GLFWwindow* window, int button, int action, int mods);
+    void on_cursor_pos(GLFWwindow* window, double xpos, double ypos);
     void setDirty() { mIsDirty = true; };
     void setScale(float scale);
 
@@ -29,6 +30,7 @@ private:
     };
 
     void update_render_instances();
+    void paint_at(double mx, double my);
 
     static void set_instance_color_from_state(int s, RenderInstance& ri);
 
@@ -50,6 +52,8 @@ private:
     GLuint mInstanceVbo = 0;
 
     bool mIsDirty = true; // boolean as to whether the widget needs to be fully redrawn
+    bool mIsPainting = false;
+    int mLastPaintIdx = -1;
 };
 
 #endif // HOPFIELD_WIDGET

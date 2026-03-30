@@ -51,6 +51,42 @@ void HopfieldWidget::update_render_instances() {
     glBufferSubData(GL_ARRAY_BUFFER, 0, mRenderInstances.size() * sizeof(RenderInstance), mRenderInstances.data());
 }
 
+void HopfieldWidget::paint_at(double mx, double my) {
+    if (mDrawWidth <= 0 || mDrawHeight <= 0) return;
+    if (mx < mDrawX || mx >= mDrawX + mDrawWidth || my < mDrawY || my >= mDrawY + mDrawHeight) {
+        mLastPaintIdx = -1;
+        return;
+    }
+
+    const float xNdc = static_cast<float>(((mx - mDrawX) / mDrawWidth) * 2.0 - 1.0);
+    const float yNdc = static_cast<float>(1.0 - ((my - mDrawY) / mDrawHeight) * 2.0);
+
+    int bestIdx = -1;
+    float bestD2 = mRadius * mRadius;
+    for (int i = 0; i < mNetwork.rows() * mNetwork.cols(); ++i) {
+        float dx = xNdc - mRenderInstances.at(i).cx;
+        float dy = yNdc - mRenderInstances.at(i).cy;
+        float d2 = dx*dx + dy*dy;
+        if (d2 <= bestD2) {
+            bestD2 = d2;
+            bestIdx = i;
+        }
+    }
+
+    if (bestIdx < 0) return;
+
+    if (bestIdx == mLastPaintIdx) return;
+    mLastPaintIdx = bestIdx;
+
+    const int row = bestIdx / mNetwork.cols();
+    const int col = bestIdx % mNetwork.cols();
+    mNetwork.at(row, col) = -mNetwork.at(row, col);
+    set_instance_color_from_state(mNetwork.at(row, col), mRenderInstances.at(bestIdx));
+
+    glBindBuffer(GL_ARRAY_BUFFER, mInstanceVbo);
+    glBufferSubData(GL_ARRAY_BUFFER, bestIdx * sizeof(RenderInstance), sizeof(RenderInstance), &mRenderInstances.at(bestIdx));
+}
+
 bool HopfieldWidget::init_gl() {
     const std::string vsSrcStr = readTextFile("shaders/hopfield_widget.vert");
     const std::string fsSrcStr = readTextFile("shaders/hopfield_widget.frag");
@@ -172,40 +208,23 @@ void HopfieldWidget::draw(int fbWidth, int fbHeight) {
 }
 
 void HopfieldWidget::on_mouse_button(GLFWwindow* window, int button, int action, int mods) {
-    if (button != GLFW_MOUSE_BUTTON_LEFT || action != GLFW_PRESS) return;
+    if (button != GLFW_MOUSE_BUTTON_LEFT) return;
 
-    double mx, my;
-    glfwGetCursorPos(window, &mx, &my);
-
-    if (mDrawWidth <= 0 || mDrawHeight <= 0) return;
-    if (mx < mDrawX || mx >= mDrawX + mDrawWidth || my < mDrawY || my >= mDrawY + mDrawHeight) return;
-
-    float xNdc = ((mx - mDrawX) / mDrawWidth) * 2.0f - 1.0f;
-    float yNdc = 1.0f - ((my - mDrawY) / mDrawHeight) * 2.0f;
-
-    int bestIdx = -1;
-    float bestD2 = mRadius * mRadius;
-    for (int i = 0; i < mNetwork.rows() * mNetwork.cols(); ++i) {
-        float dx = xNdc - mRenderInstances.at(i).cx;
-        float dy = yNdc - mRenderInstances.at(i).cy;
-        float d2 = dx*dx + dy*dy;
-        if (d2 <= bestD2) {
-            bestD2 = d2;
-            bestIdx = i;
-        }
+    if (action == GLFW_PRESS) {
+        mIsPainting = true;
+        mLastPaintIdx = -1;
+        double mx, my;
+        glfwGetCursorPos(window, &mx, &my);
+        paint_at(mx, my);
+    } else if (action == GLFW_RELEASE) {
+        mIsPainting = false;
+        mLastPaintIdx = -1;
     }
+}
 
-    if (bestIdx < 0) return;
-
-    // flip external data
-    int row = bestIdx / mNetwork.cols();
-    int col = bestIdx % mNetwork.cols();
-    mNetwork.at(row, col) = -mNetwork.at(row, col);
-
-    set_instance_color_from_state(mNetwork.at(row, col), mRenderInstances.at(bestIdx));
-
-    glBindBuffer(GL_ARRAY_BUFFER, mInstanceVbo);
-    glBufferSubData(GL_ARRAY_BUFFER, bestIdx * sizeof(RenderInstance), sizeof(RenderInstance), &mRenderInstances.at(bestIdx));
+void HopfieldWidget::on_cursor_pos(GLFWwindow* window, double xpos, double ypos) {
+    if (!mIsPainting) return;
+    paint_at(xpos, ypos);
 }
 
 void HopfieldWidget::set_instance_color_from_state(int s, RenderInstance& ri) {
