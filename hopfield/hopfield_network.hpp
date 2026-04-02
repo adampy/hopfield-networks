@@ -21,6 +21,11 @@ public:
     HopfieldNetwork(int rows, int cols, const std::vector<std::vector<int>>& memories)
         : mRows(rows), mCols(cols), mMatrix(rows * cols, -1), mMemories(memories) {}
 
+    /**
+     * Static constructor that reads a network architecture (rows, cols) and
+     * memories from a file.
+     * @note Memories are stored but network weights are not changed YET!
+     */
     static HopfieldNetwork fromFile(const std::string& filename);
 
     void saveToFile(const std::string& filename) const override;

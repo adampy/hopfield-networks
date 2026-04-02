@@ -1,54 +1,26 @@
-#include <algorithm>
-#include <iostream>
-#include <random>
-#include <string>
-
-#include "hopfield/IHopfieldNetwork.hpp"
-#include "helpers/opengl_helpers.hpp"
-#include "helpers/file_helpers.hpp"
 #include "ui/hopfield_widget.hpp"
 
+#include <algorithm>
+#include <iostream>
+#include <string>
+
+#include "helpers/file_helpers.hpp"
+#include "helpers/opengl_helpers.hpp"
 
 HopfieldWidget::HopfieldWidget(IHopfieldNetwork& network, int x, int y, int width, int height)
     : mNetwork(network), mX(x), mY(y), mWidth(width), mHeight(height), mBaseWidth(width), mBaseHeight(height) {
-
-    // initialize render instances from external data
-    int idx = 0;
-    for (int gy = 0; gy < mNetwork.rows(); ++gy) {
-        for (int gx = 0; gx < mNetwork.cols(); ++gx) {
-            const float fx = -0.875f + static_cast<float>(gx) * 0.25f;
-            const float fy =  0.875f - static_cast<float>(gy) * 0.25f;
-
-            mRenderInstances.push_back(RenderInstance{ fx, fy, 0.0f, 0.0f, 0.0f });
-            set_instance_color_from_state(mNetwork.at(gy, gx), mRenderInstances.back());
-            ++idx;
-        }
-    }
+    rebuild_instances();
 }
 
-void HopfieldWidget::setScale(float scale) {
-    if (scale <= 0.0f) return;
-
-    mWidth = static_cast<int>(static_cast<float>(mBaseWidth) * scale);
-    mHeight = static_cast<int>(static_cast<float>(mBaseHeight) * scale);
-
-    if (mWidth < 1) mWidth = 1;
-    if (mHeight < 1) mHeight = 1;
-
-    mScale = mBaseScale * scale;
-    mRadius = mScale * 0.5f;
-}
-
-void HopfieldWidget::update_render_instances() {
-    for (int gy = 0; gy < mNetwork.rows(); ++gy) {
-        for (int gx = 0; gx < mNetwork.cols(); ++gx) {
-            int idx = gy * mNetwork.cols() + gx;
-            set_instance_color_from_state(mNetwork.at(gy, gx), mRenderInstances.at(idx));
+void HopfieldWidget::rebuild_instances() {
+    mRenderInstances.clear();
+    mRenderInstances.reserve(static_cast<size_t>(mNetwork.rows() * mNetwork.cols()));
+    for (int r = 0; r < mNetwork.rows(); ++r) {
+        for (int c = 0; c < mNetwork.cols(); ++c) {
+            const float state = (mNetwork.at(r, c) > 0) ? 1.0f : 0.0f;
+            mRenderInstances.push_back(RenderInstance{ static_cast<float>(c), static_cast<float>(r), state });
         }
     }
-
-    glBindBuffer(GL_ARRAY_BUFFER, mInstanceVbo);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, mRenderInstances.size() * sizeof(RenderInstance), mRenderInstances.data());
 }
 
 void HopfieldWidget::paint_at(double mx, double my) {
@@ -58,90 +30,90 @@ void HopfieldWidget::paint_at(double mx, double my) {
         return;
     }
 
-    const float xNdc = static_cast<float>(((mx - mDrawX) / mDrawWidth) * 2.0 - 1.0);
-    const float yNdc = static_cast<float>(1.0 - ((my - mDrawY) / mDrawHeight) * 2.0);
+    const double fx = (mx - mDrawX) / static_cast<double>(mDrawWidth);
+    const double fy = (my - mDrawY) / static_cast<double>(mDrawHeight);
 
-    int bestIdx = -1;
-    float bestD2 = mRadius * mRadius;
-    for (int i = 0; i < mNetwork.rows() * mNetwork.cols(); ++i) {
-        float dx = xNdc - mRenderInstances.at(i).cx;
-        float dy = yNdc - mRenderInstances.at(i).cy;
-        float d2 = dx*dx + dy*dy;
-        if (d2 <= bestD2) {
-            bestD2 = d2;
-            bestIdx = i;
-        }
-    }
+    const int col = static_cast<int>(fx * mNetwork.cols());
+    // GLFW cursor Y is top->bottom but grid/shader row 0 is at bottom
+    const int row = (mNetwork.rows() - 1) - static_cast<int>(fy * mNetwork.rows());
 
-    if (bestIdx < 0) return;
+    if (row < 0 || row >= mNetwork.rows() || col < 0 || col >= mNetwork.cols()) return;
 
-    if (bestIdx == mLastPaintIdx) return;
-    mLastPaintIdx = bestIdx;
+    const int idx = row * mNetwork.cols() + col;
+    if (idx == mLastPaintIdx) return;
+    mLastPaintIdx = idx;
 
-    const int row = bestIdx / mNetwork.cols();
-    const int col = bestIdx % mNetwork.cols();
     mNetwork.at(row, col) = -mNetwork.at(row, col);
-    set_instance_color_from_state(mNetwork.at(row, col), mRenderInstances.at(bestIdx));
+
+    const float state = (mNetwork.at(row, col) > 0) ? 1.0f : 0.0f;
+    mRenderInstances.at(idx).state = state;
 
     glBindBuffer(GL_ARRAY_BUFFER, mInstanceVbo);
-    glBufferSubData(GL_ARRAY_BUFFER, bestIdx * sizeof(RenderInstance), sizeof(RenderInstance), &mRenderInstances.at(bestIdx));
+    glBufferSubData(GL_ARRAY_BUFFER, idx * sizeof(RenderInstance), sizeof(RenderInstance), &mRenderInstances.at(idx));
 }
 
 bool HopfieldWidget::init_gl() {
+    // Create shaders and return false if errors
     const std::string vsSrcStr = readTextFile("shaders/hopfield_widget.vert");
     const std::string fsSrcStr = readTextFile("shaders/hopfield_widget.frag");
+    if (vsSrcStr.empty() || fsSrcStr.empty()) return false;
+    mProgram = create_program(vsSrcStr.c_str(), fsSrcStr.c_str());
+    if (!mProgram) return false;
 
-    if (vsSrcStr.empty() || fsSrcStr.empty())
-        return false;
-
-    const char* vsSrc = vsSrcStr.c_str();
-    const char* fsSrc = fsSrcStr.c_str();
-
-    mProgram = create_program(vsSrc, fsSrc);
-    if (!mProgram) {
-        return false;
-    } 
-
+    // Define unit quad geometry
     const float quadVertices[] = {
-        -0.5f, -0.5f,
-         0.5f, -0.5f,
-         0.5f,  0.5f,
-        -0.5f,  0.5f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
     };
-
     const unsigned int quadIndices[] = {
         0, 1, 2,
         2, 3, 0,
     };
 
+    // Create GPU objects:
+    // - VAO: vertex input state (which buffers feed which attributes)
+    // - VBO: per-vertex quad geometry (aPos)
+    // - EBO: quad indices (two triangles)
+    // - instance VBO: per-cell data (iCell, iState)
     glGenVertexArrays(1, &mVao);
     glGenBuffers(1, &mVbo);
     glGenBuffers(1, &mEbo);
     glGenBuffers(1, &mInstanceVbo);
 
+    // Bind the VAO first so all subsequent vertex attribute/buffer bindings are recorded into it.
     glBindVertexArray(mVao);
 
+    // Upload unit quad geometry
     glBindBuffer(GL_ARRAY_BUFFER, mVbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
 
+    // Upload quad indices
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mEbo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
+    // aPos (per-vertex, 2 floats)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
+    // Upload per-cell instance data
     glBindBuffer(GL_ARRAY_BUFFER, mInstanceVbo);
-    glBufferData(GL_ARRAY_BUFFER, mRenderInstances.size() * sizeof(RenderInstance), mRenderInstances.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, mRenderInstances.size() * sizeof(RenderInstance), mRenderInstances.data(), GL_DYNAMIC_DRAW);
 
+    // iCell (per-instance, 2 floats)
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(RenderInstance), (void*)0);
     glVertexAttribDivisor(1, 1);
 
+    // iState (per-instance, 1 float)
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(RenderInstance), (void*)(2 * sizeof(float)));
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(RenderInstance), (void*)(2 * sizeof(float)));
     glVertexAttribDivisor(2, 1);
 
+    // Unbind VAO
     glBindVertexArray(0);
+
     return true;
 }
 
@@ -158,28 +130,42 @@ void HopfieldWidget::shutdown_gl() {
     mProgram = 0;
 }
 
-void HopfieldWidget::draw(int fbWidth, int fbHeight) {
-    if (!mProgram || !mVao) return;
-    if (mIsDirty) {
-        update_render_instances();
-        mIsDirty = false;
-    }
+void HopfieldWidget::setScale(float scale) {
+    if (scale <= 0.0f) return;
+    mScale = scale;
 
+    mWidth = static_cast<int>(static_cast<float>(mBaseWidth) * scale);
+    mHeight = static_cast<int>(static_cast<float>(mBaseHeight) * scale);
+
+    if (mWidth < 1) mWidth = 1;
+    if (mHeight < 1) mHeight = 1;
+}
+
+void HopfieldWidget::draw(int fbWidth, int fbHeight) {
+    // Early return if cannot draw
     if (fbWidth <= 0 || fbHeight <= 0) return;
+    if (!mProgram || !mVao) return;
+
+    if (mIsDirty) {
+        // then need to rebuild render instances
+        rebuild_instances();
+        glBindBuffer(GL_ARRAY_BUFFER, mInstanceVbo);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, mRenderInstances.size() * sizeof(RenderInstance), mRenderInstances.data());
+        mIsDirty = false;
+    }    
 
     const int vx = mX;
     const int vy = fbHeight - (mY + mHeight);
 
-    // The logical widget rect for UI hit testing uses top-left origin.
     mDrawX = mX;
     mDrawY = mY;
     mDrawWidth = mWidth;
     mDrawHeight = mHeight;
 
-    // Viewport is allowed to extend offscreen (to avoid scaling/squishing).
+    // Set widget viewport in framebuffer space (origin is bottom-left for OpenGL)
     glViewport(vx, vy, mWidth, mHeight);
 
-    // Scissor must be inside framebuffer; clip to intersection.
+    // Compute the visible portion of the widget (clip to framebuffer bounds)
     const int sx0 = std::max(vx, 0);
     const int sy0 = std::max(vy, 0);
     const int sx1 = std::min(vx + mWidth, fbWidth);
@@ -188,22 +174,21 @@ void HopfieldWidget::draw(int fbWidth, int fbHeight) {
     const int sh = sy1 - sy0;
     if (sw <= 0 || sh <= 0) return;
 
+    // Scissor to visible region (so don't draw outside framebuffer)
     glEnable(GL_SCISSOR_TEST);
     glScissor(sx0, sy0, sw, sh);
 
+    // Bind shader program and update grid dimensions
     glUseProgram(mProgram);
-    GLint uScale = glGetUniformLocation(mProgram, "uScale");
-    glUniform1f(uScale, mScale);
+    GLint uGrid = glGetUniformLocation(mProgram, "uGrid");
+    glUniform2f(uGrid, static_cast<float>(mNetwork.cols()), static_cast<float>(mNetwork.rows()));
 
-    // Keep circles circular in non-square viewports
-    const float aspect = (mHeight != 0) ? (static_cast<float>(mWidth) / static_cast<float>(mHeight)) : 1.0f;
-    GLint uAspect = glGetUniformLocation(mProgram, "uAspect");
-    glUniform1f(uAspect, aspect);
-
+    // Draw indexed quad once per neuron using instancing
     glBindVertexArray(mVao);
     glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0, mNetwork.rows() * mNetwork.cols());
     glBindVertexArray(0);
 
+    // Restore state
     glDisable(GL_SCISSOR_TEST);
 }
 
@@ -225,13 +210,4 @@ void HopfieldWidget::on_mouse_button(GLFWwindow* window, int button, int action,
 void HopfieldWidget::on_cursor_pos(GLFWwindow* window, double xpos, double ypos) {
     if (!mIsPainting) return;
     paint_at(xpos, ypos);
-}
-
-void HopfieldWidget::set_instance_color_from_state(int s, RenderInstance& ri) {
-    const float on = (s > 0) ? 1.0f : 0.0f;
-    const float onR = 0.20f, onG = 0.85f, onB = 0.35f;
-    const float offR = 0.15f, offG = 0.17f, offB = 0.20f;
-    ri.r = offR + (onR - offR) * on;
-    ri.g = offG + (onG - offG) * on;
-    ri.b = offB + (onB - offB) * on;
 }

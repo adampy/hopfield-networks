@@ -18,40 +18,43 @@ public:
     bool init_gl();
     void shutdown_gl();
     void draw(int fbWidth, int fbHeight);
+
     void on_mouse_button(GLFWwindow* window, int button, int action, int mods);
     void on_cursor_pos(GLFWwindow* window, double xpos, double ypos);
-    void setDirty() { mIsDirty = true; };
+
+    void setDirty() { mIsDirty = true; }
     void setScale(float scale);
 
 private:
     struct RenderInstance {
-        float cx, cy;
-        float r, g, b;
+        float ix;
+        float iy;
+        float state;
     };
 
-    void update_render_instances();
+    void rebuild_instances();
     void paint_at(double mx, double my);
-
-    static void set_instance_color_from_state(int s, RenderInstance& ri);
 
     IHopfieldNetwork& mNetwork;
 
+    // Widget position and size
     int mX, mY, mWidth, mHeight;
     int mBaseWidth, mBaseHeight;
+    float mScale = 1.0f;
+
+    // Drawing area within the widget
     int mDrawX = 0, mDrawY = 0, mDrawWidth = 0, mDrawHeight = 0;
-    float mBaseScale = 0.18f;
-    float mScale = 0.18f;
-    float mRadius = 0.18f * 0.5f;
 
-    std::vector<RenderInstance> mRenderInstances = {};
-
+    // OpenGL-related members
     GLuint mProgram = 0;
     GLuint mVao = 0;
     GLuint mVbo = 0;
     GLuint mEbo = 0;
     GLuint mInstanceVbo = 0;
-
-    bool mIsDirty = true; // boolean as to whether the widget needs to be fully redrawn
+    
+    // State
+    std::vector<RenderInstance> mRenderInstances = {};
+    bool mIsDirty = true;
     bool mIsPainting = false;
     int mLastPaintIdx = -1;
 };

@@ -1,13 +1,11 @@
 #version 330 core
-in vec2 vLocal;
-flat in vec3 vColor;
-uniform float uAspect;
+flat in float vState;
+
 out vec4 FragColor;
+
 void main()
 {
-    vec2 p = vLocal;
-    p.x *= uAspect;
-    float r = length(p);
-    if (r > 0.5) discard;
-    FragColor = vec4(vColor, 1.0);
+    float s = (vState > 0.5) ? 1.0 : 0.0;
+    vec3 c = vec3(1.0 - s);
+    FragColor = vec4(c, 1.0);
 }
