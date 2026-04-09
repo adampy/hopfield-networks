@@ -158,15 +158,15 @@ int main() {
             if (state.getNetwork() != nullptr) {
                 for (int i = 0; i < state.getNetwork()->getMemories().size(); ++i) {
                     const auto& memory = state.getNetwork()->getMemories().at(i);
-                    if (ImGui::Button(("Set weights to memory " + std::to_string(i)).c_str())) {
-                        state.getNetwork()->setWeights(memory);
+                    if (ImGui::Button(("Set Activations to memory " + std::to_string(i)).c_str())) {
+                        state.getNetwork()->setActivations(memory);
                         if (state.getWidget() != nullptr) {
                             state.getWidget()->setDirty();
                         }
                     }
                 }
 
-                if (ImGui::Button("Save Weights as New Memory")) {
+                if (ImGui::Button("Save Activations as New Memory")) {
                     state.getNetwork()->addMemory(state.getNetwork()->data());
                 }
             }

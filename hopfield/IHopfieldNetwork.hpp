@@ -5,7 +5,7 @@
 #include <string>
 
 /**
- * Interface for a Hopfield network with weight matrix
+ * Interface for a Hopfield network with activation matrix
  * and associated memories.
  * 
  * @author Adam Crawley
@@ -27,7 +27,7 @@ public:
 
     virtual void addMemory(const std::vector<int>& memory) = 0;
 
-    virtual void setWeights(const std::vector<int>& weights) = 0;
+    virtual void setActivations(const std::vector<int>& activations) = 0;
 
     virtual void saveToFile(const std::string& filename) const = 0;
 };

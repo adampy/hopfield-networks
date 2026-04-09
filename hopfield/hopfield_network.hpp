@@ -6,7 +6,7 @@
 #include "hopfield/IHopfieldNetwork.hpp"
 
 /**
- * Representation of a classical Hopfield network with weight matrix
+ * Representation of a classical Hopfield network with activation matrix
  * and associated memories.
  
  * @author Adam Crawley
@@ -24,7 +24,7 @@ public:
     /**
      * Static constructor that reads a network architecture (rows, cols) and
      * memories from a file.
-     * @note Memories are stored but network weights are not changed YET!
+     * @note Memories are stored but network  are not changed YET!
      */
     static HopfieldNetwork fromFile(const std::string& filename);
 
@@ -43,7 +43,7 @@ public:
 
     void addMemory(const std::vector<int>& memory) override { mMemories.push_back(memory); }
 
-    void setWeights(const std::vector<int>& weights) override { mMatrix = weights; }
+    void setActivations(const std::vector<int>& activations) override { mMatrix = activations; }
 
 private:
     int mRows, mCols;
