@@ -48,6 +48,8 @@ add_executable(hopfield_networks
   hopfield/hopfield_network.cpp
   hopfield/hopfield_network.hpp
   hopfield/IHopfieldNetwork.hpp
+  hopfield/experiment_runner.cpp
+  hopfield/experiment_runner.hpp
   hopfield/simulation_state.cpp
   hopfield/simulation_state.hpp
 

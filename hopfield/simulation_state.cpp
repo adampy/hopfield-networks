@@ -2,7 +2,30 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <string.h>
+#include <sstream>
+#include <string>
 
+
+std::vector<int> SimulationState::getParsedNetworkSizes() const {
+    std::vector<int> sizes;
+    // Parse from copy so underlying buffer isn't modified
+    const std::string input(mNetworkSizes);
+    std::stringstream ss(input);
+    std::string token;
+    while (std::getline(ss, token, ',')) {
+        // Skip empty entries (trailing commas, consecutive commas, etc)
+        if (token.empty()) {
+            continue;
+        }
+        // atoi tolerates leading whitespace - invalid tokens become 0
+        int value = atoi(token.c_str());
+        if (value > 0) {
+            sizes.push_back(value);
+        }
+    }
+    return sizes;
+}
 
 void SimulationState::deleteNetworkAndWidget(GLFWwindow* window) {
     if (window != nullptr) {

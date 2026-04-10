@@ -1,6 +1,7 @@
 #include <iostream>
 #include "config.hpp"
 
+#include "hopfield/experiment_runner.hpp"
 #include "hopfield/simulation_state.hpp"
 #include "hopfield/hopfield_network.hpp"
 #include "imgui/imgui.h"
@@ -87,6 +88,8 @@ int main() {
 
     // Main loop
     SimulationState state;
+    ExperimentRunner experiments;
+
     while (!glfwWindowShouldClose(window)) {
         process_input(window);
 
@@ -98,7 +101,6 @@ int main() {
 
         int fbW = 0, fbH = 0;
         glfwGetFramebufferSize(window, &fbW, &fbH);
-        
 
         // UI Logic
         if (state.getWidget() != nullptr && state.getNetwork() != nullptr
@@ -111,6 +113,16 @@ int main() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        // Make window for experiment progress if an experiment is running
+        if (experiments.isExperiment1Running()) {
+            ImGui::Begin("Experiment Progress", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text("Running Experiment 1...");
+            const float p = experiments.getExperiment1Progress();
+            ImGui::ProgressBar(p, ImVec2(300, 0));
+            ImGui::End();
+        }
+
         ImGui::Begin("Hopfield Network");
         ImGui::Text("This is a simple Hopfield network visualization.");
 
@@ -200,8 +212,46 @@ int main() {
             }
         }
 
-        if (ImGui::CollapsingHeader("Evaluation")) {
-            ImGui::SliderFloat("Noise", state.getNoiseLevel(), 0.0f, 1.0f);
+        // Add separator with some padding
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+        ImGui::Separator();
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+        if (ImGui::CollapsingHeader("Experiment 1")) {
+            ImGui::Text("Estimating critical capacity vs network size");
+            ImGui::InputText("Network Sizes (comma separated)", state.getNetworkSizes(), state.getNetworkSizesCapacity());
+            ImGui::InputInt("Number of trials##exp1", state.getNumTrials1());
+            ImGui::SliderFloat("Retrieval Success Threshold##exp1", state.getRetrievalThreshold1(), 0.0f, 1.0f);
+            const bool exp1IsRunning = experiments.isExperiment1Running();
+            if (exp1IsRunning) {
+                ImGui::BeginDisabled();
+            }
+            if (ImGui::Button("Run Experiment 1")) {
+                const auto sizes = state.getParsedNetworkSizes();
+                experiments.startExperiment1(sizes);
+            }
+            if (exp1IsRunning) {
+                ImGui::EndDisabled();
+            }
+        }
+
+        if (ImGui::CollapsingHeader("Experiment 2")) {
+            ImGui::Text("3x Heatmaps of retrieval success vs saturation and noise level");
+            ImGui::InputInt("Network Size", state.getNetworkSize());
+            ImGui::InputInt("Number of trials##exp2", state.getNumTrials2());
+            ImGui::SliderFloat("Max Saturation", state.getMaxSaturation(), 0.0f, 1.0f);
+            ImGui::SliderFloat("Max Noise", state.getMaxNoise(), 0.0f, 1.0f);
+            if (ImGui::Button("Run Experiment 2")) {
+                // TODO: Run experiment
+            }
+        }
+
+        if (ImGui::CollapsingHeader("Experiment 3")) {
+            ImGui::Text("Critical Noise (i.e. noise level where all patterns retrieved with given threshold) vs saturation");
+            ImGui::SliderFloat("Retrieval Success Threshold##exp3", state.getRetrievalThreshold3(), 0.0f, 1.0f);
+            if (ImGui::Button("Run Experiment 3")) {
+                // TODO: Run experiment
+            }
         }
 
         ImGui::End();
