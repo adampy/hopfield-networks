@@ -2,8 +2,19 @@
 
 #include <string>
 #include <vector>
+#include <Eigen/Dense>
 
 #include "helpers/file_helpers.hpp"
+
+HopfieldNetwork::HopfieldNetwork(int rows, int cols, StoragePrescription sp)
+    : mRows(rows), mCols(cols), mSize(rows * cols), mActivationMatrix(mSize, -1),  mWeights(mSize * mSize, 0) {}
+
+
+HopfieldNetwork::HopfieldNetwork(int rows, int cols, StoragePrescription sp, const std::vector<std::vector<int>>& memories)
+    :  HopfieldNetwork(rows, cols, sp) {
+    
+    mMemories = memories;
+}
 
 HopfieldNetwork HopfieldNetwork::fromFile(const std::string& filename) {
     // Example format: (rows, cols, data)
@@ -15,15 +26,18 @@ HopfieldNetwork HopfieldNetwork::fromFile(const std::string& filename) {
     // [blank lines allowed]
     // [more memories...]
 
+    // TODO: Read this from file later...
+    StoragePrescription sp = HEBBIAN;
+
     // Get network data from header
     const std::vector<std::string> lines = getLinesFromFile(filename.c_str());
     if (lines.empty()) {
-        return HopfieldNetwork(0, 0);
+        return HopfieldNetwork(0, 0, sp);
     }
     const auto header = lines.at(0);
     const auto sep = header.find(' ');
     if (sep == std::string::npos) {
-        return HopfieldNetwork(0, 0);
+        return HopfieldNetwork(0, 0, sp);
     }
     const int rows = std::stoi(header.substr(0, sep));
     const int cols = std::stoi(header.substr(sep + 1));
@@ -50,7 +64,7 @@ HopfieldNetwork HopfieldNetwork::fromFile(const std::string& filename) {
         }
     }
 
-    HopfieldNetwork net(rows, cols, memories);
+    HopfieldNetwork net(rows, cols, sp, memories);
     return net;
 }
 
@@ -71,4 +85,13 @@ void HopfieldNetwork::saveToFile(const std::string& filename) const {
     }
 
     writeToFile(toWrite.c_str(), filename.c_str());
+}
+
+void HopfieldNetwork::setWeightsFromMemories() {
+    Eigen::MatrixXd m(2, 2);
+    m(0, 0) = 3;
+    m(1, 0) = 2.5;
+    m(0, 1) = -1;
+    m(1, 1) = m(1, 0) + m(0, 1);
+    // std::cout << m << std::endl;
 }

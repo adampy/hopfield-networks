@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_package(Eigen3 3.4 REQUIRED NO_MODULE)
+
 # Workaround for dependencies that declare very old cmake_minimum_required()
 # which newer CMake versions reject.
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
@@ -86,7 +88,7 @@ target_include_directories(hopfield_networks PRIVATE
 # ----- More setup below -----
 
 # glad provides target glad, glfw provides glfw
-target_link_libraries(hopfield_networks PRIVATE glfw glad)
+target_link_libraries(hopfield_networks PRIVATE glfw glad Eigen3::Eigen)
 
 # On some Linux distros you may need explicit link to dl
 if(UNIX AND NOT APPLE)

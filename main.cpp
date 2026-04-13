@@ -151,7 +151,7 @@ int main() {
                     state.deleteNetworkAndWidget(window);
 
                     // Make new network
-                    state.setNetwork(new HopfieldNetwork(*state.getRows(), *state.getCols()));
+                    state.setNetwork(new HopfieldNetwork(*state.getRows(), *state.getCols(), StoragePrescription::HEBBIAN)); // TODO: update this to use specific prescription
                     if (state.makeWidgetFromNetwork(window) != 0) {
                         return 1;
                     }
