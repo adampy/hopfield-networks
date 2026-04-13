@@ -4,6 +4,7 @@
 #include "hopfield/experiment_runner.hpp"
 #include "hopfield/simulation_state.hpp"
 #include "hopfield/hopfield_network.hpp"
+#include "hopfield/StoragePrescription.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
@@ -197,11 +198,11 @@ int main() {
                     // radio buttons on storage prescription
                     ImGui::Text("Storage prescription:");
                     ImGui::RadioButton("Hebbian", state.getStoragePrescription(),
-                        SimulationState::StoragePrescription::HEBBIAN);
+                        StoragePrescription::HEBBIAN);
                     ImGui::RadioButton("Pseudo-inverse", state.getStoragePrescription(),
-                        SimulationState::StoragePrescription::PSEUDO_INVERSE);
+                        StoragePrescription::PSEUDO_INVERSE);
                     ImGui::RadioButton("Storkey", state.getStoragePrescription(),
-                        SimulationState::StoragePrescription::STORKEY);
+                        StoragePrescription::STORKEY);
 
                     if (ImGui::Button("Learn memories")) {
                         if (state.getNetwork() != nullptr) {

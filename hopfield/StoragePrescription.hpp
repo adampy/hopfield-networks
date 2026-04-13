@@ -1,0 +1,10 @@
+#ifndef STORAGE_PRESCRIPTION
+#define STORAGE_PRESCRIPTION
+
+enum StoragePrescription {
+    HEBBIAN = 0,
+    PSEUDO_INVERSE = 1,
+    STORKEY = 2
+};
+
+#endif // STORAGE_PRESCRIPTION

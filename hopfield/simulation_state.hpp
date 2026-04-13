@@ -2,6 +2,7 @@
 #define SIMULATION_STATE
 
 #include "hopfield/IHopfieldNetwork.hpp"
+#include "hopfield/StoragePrescription.hpp"
 #include "ui/hopfield_widget.hpp"
  #include <cstddef>
 
@@ -13,11 +14,6 @@
  */
 class SimulationState {
 public:
-    enum StoragePrescription {
-        HEBBIAN = 0,
-        PSEUDO_INVERSE = 1,
-        STORKEY = 2
-    };
 
     SimulationState() : mCols(3), mRows(5), mShouldDrawNetwork(false), 
         mWidget(nullptr), mNetwork(nullptr),
