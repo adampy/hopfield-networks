@@ -6,6 +6,8 @@
 
 #include "helpers/file_helpers.hpp"
 
+using namespace Eigen;
+
 HopfieldNetwork::HopfieldNetwork(int rows, int cols, StoragePrescription sp)
     : mRows(rows), mCols(cols), mSize(rows * cols), mActivationMatrix(mSize, -1),  mWeights(mSize * mSize, 0) {}
 
@@ -14,6 +16,8 @@ HopfieldNetwork::HopfieldNetwork(int rows, int cols, StoragePrescription sp, con
     :  HopfieldNetwork(rows, cols, sp) {
     
     mMemories = memories;
+
+    setWeightsFromMemories();
 }
 
 HopfieldNetwork HopfieldNetwork::fromFile(const std::string& filename) {
@@ -87,11 +91,21 @@ void HopfieldNetwork::saveToFile(const std::string& filename) const {
     writeToFile(toWrite.c_str(), filename.c_str());
 }
 
+MatrixXd HopfieldNetwork::createMemoryMatrix() {
+    MatrixXd result(mSize, mSize);
+
+    for(int i = 0; i < mMemories.size();  i++){
+        result.row(i) = VectorXi::Map(mMemories.at(i).data(), mSize).cast<double>();
+    }
+
+    return result;
+}
+
 void HopfieldNetwork::setWeightsFromMemories() {
-    Eigen::MatrixXd m(2, 2);
-    m(0, 0) = 3;
-    m(1, 0) = 2.5;
-    m(0, 1) = -1;
-    m(1, 1) = m(1, 0) + m(0, 1);
-    // std::cout << m << std::endl;
+    MatrixXd memoriesMatrix = createMemoryMatrix();
+
+    // TODO: add  a swich case statement to switch based on the storage prescription
+    MatrixXd weights = (1/mMemories.size()) *  memoriesMatrix * memoriesMatrix.transpose();
+
+    mWeights = std::vector<float>(weights.data(), weights.data() + weights.rows() * weights.cols());
 }

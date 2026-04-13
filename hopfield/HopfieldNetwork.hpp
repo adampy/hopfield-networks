@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <Eigen/Dense>
 #include "hopfield/StoragePrescription.hpp"
 #include "hopfield/IHopfieldNetwork.hpp"
 
@@ -50,7 +51,9 @@ public:
     const std::vector<std::vector<int>>& getMemories() const override { return mMemories; }
 
     // Change current state
-    void addMemory(const std::vector<int>& memory) override { mMemories.push_back(memory); } // this should add memory and add associated weights
+    void addMemory(const std::vector<int>& memory) override { mMemories.push_back(memory); } // TODO: update weights with new memory
+
+    // TODO: Add option to remove memory?
     
     void setActivations(const std::vector<int>& activations) override { mActivationMatrix = activations; }
     
@@ -73,6 +76,8 @@ public:
     }
 
     void setWeightsFromMemories();
+
+    Eigen::MatrixXd createMemoryMatrix();
 };
 
 #endif // HOPFIELD_NETWORK
