@@ -1,4 +1,4 @@
-#include "hopfield/simulation_state.hpp"
+#include "hopfield/SimulationState.hpp"
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

@@ -45,13 +45,13 @@ add_executable(hopfield_networks
   helpers/opengl_helpers.hpp
 
   # Hopfield
-  hopfield/hopfield_network.cpp
-  hopfield/hopfield_network.hpp
+  hopfield/HopfieldNetwork.cpp
+  hopfield/HopfieldNetwork.hpp
   hopfield/IHopfieldNetwork.hpp
-  hopfield/experiment_runner.cpp
-  hopfield/experiment_runner.hpp
-  hopfield/simulation_state.cpp
-  hopfield/simulation_state.hpp
+  hopfield/ExperimentRunner.cpp
+  hopfield/ExperimentRunner.hpp
+  hopfield/SimulationState.cpp
+  hopfield/SimulationState.hpp
 
   # UI widgets
   ui/hopfield_widget.cpp

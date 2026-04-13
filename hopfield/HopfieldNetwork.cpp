@@ -1,4 +1,4 @@
-#include "hopfield/hopfield_network.hpp"
+#include "hopfield/HopfieldNetwork.hpp"
 
 #include <string>
 #include <vector>

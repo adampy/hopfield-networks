@@ -1,4 +1,4 @@
-#include "hopfield/experiment_runner.hpp"
+#include "hopfield/ExperimentRunner.hpp"
 #include <chrono>
 #include <iostream>
 

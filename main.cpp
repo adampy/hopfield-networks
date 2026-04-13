@@ -1,9 +1,9 @@
 #include <iostream>
 #include "config.hpp"
 
-#include "hopfield/experiment_runner.hpp"
-#include "hopfield/simulation_state.hpp"
-#include "hopfield/hopfield_network.hpp"
+#include "hopfield/ExperimentRunner.hpp"
+#include "hopfield/SimulationState.hpp"
+#include "hopfield/HopfieldNetwork.hpp"
 #include "hopfield/StoragePrescription.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
