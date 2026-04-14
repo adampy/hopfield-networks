@@ -18,16 +18,16 @@ public:
     // Constructor with no data
     HopfieldNetwork(int rows, int cols, StoragePrescription sp);
 
-    // Constructor with memories
+    // Constructor with memories - memories are learnt in this method with sp
     HopfieldNetwork(int rows, int cols, StoragePrescription sp, const std::vector<std::vector<int>>& memories);
         // : mRows(rows), mCols(cols), mActivationMatrix(rows * cols, -1), mWeights(mSize * mSize, 0), mMemories(memories) {}
 
     /**
-     * Static constructor that reads a network architecture (rows, cols) and
+     * Constructor that reads a network architecture (rows, cols, sp) and
      * memories from a file.
      * @note Memories are stored but network  are not changed YET!
      */
-    static HopfieldNetwork fromFile(const std::string& filename);
+    HopfieldNetwork(const std::string& filename);
 
     // Get current state:
     void saveToFile(const std::string& filename) const override;
@@ -57,7 +57,14 @@ public:
     
     void setActivations(const std::vector<int>& activations) override { mActivationMatrix = activations; }
     
-    private:
+    /**
+     * The generic hopfield network interface entry point to perform a single entire
+     * network pass of inference
+     * @note No convergence checking included (since this is a single pass)
+     */
+    void infer(InferenceMode mode); // TODO: Remove old update method?
+
+private:
     // N.B. should probably add some of this to the interface, will do that later
     int mRows, mCols, mSize;
     std::vector<int> mActivationMatrix; // -1 or 1
@@ -79,9 +86,13 @@ public:
 
     int getSign(int linearIndex);
 
-    void updateNode(int  linearIndex);
+    void updateNode(int linearIndex);
 
-    void asyncUpdatePass();
+    /**
+     * Perform a single asynchronous update pass of the network
+     * @param mode The update mode (random or sequential)
+     */
+    void asyncUpdatePass(InferenceMode mode);
 
     Eigen::MatrixXd createMemoryMatrix();
 };

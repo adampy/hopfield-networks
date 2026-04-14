@@ -3,7 +3,7 @@
 
 #include "hopfield/IHopfieldNetwork.hpp"
 #include "hopfield/StoragePrescription.hpp"
-#include "ui/hopfield_widget.hpp"
+#include "ui/HopfieldWidget.hpp"
  #include <cstddef>
 
 /**

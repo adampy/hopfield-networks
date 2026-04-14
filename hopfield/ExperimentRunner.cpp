@@ -21,11 +21,15 @@ void ExperimentRunner::startExperiment1(std::vector<int> sizes) {
             return;
         }
 
+        // EXPERIMENT GOES HERE
+
         for (std::size_t i = 0; i < total; ++i) {
             std::cout << "Running experiment for network size: " << sizes[i] << std::endl;
             setExperiment1Progress(static_cast<float>(i) / static_cast<float>(total));
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
+
+        // END OF EXPERIMENT
 
         setExperiment1Progress(1.0f);
         setExperiment1Running(false);

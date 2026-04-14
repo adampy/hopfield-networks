@@ -1,4 +1,4 @@
-#include "ui/hopfield_widget.hpp"
+#include "ui/HopfieldWidget.hpp"
 
 #include <algorithm>
 #include <iostream>

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include "hopfield/InferenceMode.hpp"
 
 /**
  * Interface for a Hopfield network with activation matrix
@@ -32,6 +33,8 @@ public:
     virtual void setActivations(const std::vector<int>& activations) = 0;
 
     virtual void saveToFile(const std::string& filename) const = 0;
+
+    virtual void infer(InferenceMode mode) = 0;
 };
 
 #endif // IHOPFIELD_NETWORK

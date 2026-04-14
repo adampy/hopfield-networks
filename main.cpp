@@ -8,7 +8,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
-#include "ui/hopfield_widget.hpp"
+#include "ui/HopfieldWidget.hpp"
 
 static void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -137,7 +137,7 @@ int main() {
             if (state.getNetwork() == nullptr) {
                 if (ImGui::Button("Load from state.hpf")) {
                     state.deleteNetworkAndWidget(window);
-                    state.setNetwork(new HopfieldNetwork(HopfieldNetwork::fromFile("state.hpf")));
+                    state.setNetwork(new HopfieldNetwork("state.hpf"));
                     if (state.makeWidgetFromNetwork(window) != 0) {
                         return 1;
                     }
@@ -209,6 +209,28 @@ int main() {
                             // use learning method with state.getNetwork()->getMemories() to learn weights
                         }
                     }
+                }
+            }
+        }
+
+        // Manual inference options
+        if (ImGui::CollapsingHeader("Inference")) {
+            if (ImGui::Button("Asynchronous (sequential) pass")) {
+                if (state.getNetwork() != nullptr) {
+                    state.getNetwork()->infer(InferenceMode::ASYNC_SEQUENTIAL);
+                    state.getWidget()->setDirty();
+                }
+            }
+            if (ImGui::Button("Asynchronous (random) pass")) {
+                if (state.getNetwork() != nullptr) {
+                    state.getNetwork()->infer(InferenceMode::ASYNC_RANDOM);
+                    state.getWidget()->setDirty();
+                }
+            }
+            if (ImGui::Button("Synchronous pass")) {
+                if (state.getNetwork() != nullptr) {
+                    state.getNetwork()->infer(InferenceMode::SYNC);
+                    state.getWidget()->setDirty();
                 }
             }
         }

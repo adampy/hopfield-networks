@@ -56,8 +56,8 @@ add_executable(hopfield_networks
   hopfield/SimulationState.hpp
 
   # UI widgets
-  ui/hopfield_widget.cpp
-  ui/hopfield_widget.hpp
+  ui/HopfieldWidget.cpp
+  ui/HopfieldWidget.hpp
 
   # imgui
   imgui/imconfig.h
