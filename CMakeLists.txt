@@ -41,19 +41,24 @@ add_executable(hopfield_networks
   main.cpp
   config.hpp
 
+  # Experiment
+  experiment/ExperimentHelpers.cpp
+  experiment/ExperimentHelpers.hpp
+  experiment/ExperimentRunner.cpp
+  experiment/ExperimentRunner.hpp
+
   # Helpers
   helpers/file_helpers.hpp
-  helpers/math_helpers.hpp
   helpers/opengl_helpers.hpp
 
   # Hopfield
   hopfield/HopfieldNetwork.cpp
   hopfield/HopfieldNetwork.hpp
   hopfield/IHopfieldNetwork.hpp
-  hopfield/ExperimentRunner.cpp
-  hopfield/ExperimentRunner.hpp
+  hopfield/InferenceMode.hpp
   hopfield/SimulationState.cpp
   hopfield/SimulationState.hpp
+  hopfield/StoragePrescription.hpp
 
   # UI widgets
   ui/HopfieldWidget.cpp

@@ -1,7 +1,8 @@
 #include <iostream>
 #include "config.hpp"
 
-#include "hopfield/ExperimentRunner.hpp"
+#include "experiment/ExperimentRunner.hpp"
+#include "experiment/ExperimentHelpers.hpp"
 #include "hopfield/SimulationState.hpp"
 #include "hopfield/HopfieldNetwork.hpp"
 #include "hopfield/StoragePrescription.hpp"
@@ -171,11 +172,20 @@ int main() {
             if (state.getNetwork() != nullptr) {
                 for (int i = 0; i < state.getNetwork()->getMemories().size(); ++i) {
                     const auto& memory = state.getNetwork()->getMemories().at(i);
-                    if (ImGui::Button(("Set Activations to memory " + std::to_string(i)).c_str())) {
+                    if (ImGui::Button(("Set Activations to Memory " + std::to_string(i)).c_str())) {
                         state.getNetwork()->setActivations(memory);
                         if (state.getWidget() != nullptr) {
                             state.getWidget()->setDirty();
                         }
+                    }
+                }
+
+                if (ImGui::Button("Set Activations to Random Pattern")) {
+                    const int patternSize = state.getNetwork()->rows() * state.getNetwork()->cols(); // TODO: Rollup into single size method
+                    auto pattern = generateRandomPattern(patternSize);
+                    state.getNetwork()->setActivations(pattern);
+                    if (state.getWidget() != nullptr) {
+                        state.getWidget()->setDirty();
                     }
                 }
 
