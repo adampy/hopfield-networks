@@ -51,7 +51,7 @@ public:
     const std::vector<std::vector<int>>& getMemories() const override { return mMemories; }
 
     // Change current state
-    void addMemory(const std::vector<int>& memory) override { mMemories.push_back(memory); } // TODO: update weights with new memory
+    void addMemory(const std::vector<int>& memory) override { mMemories.push_back(memory);  setWeightsFromMemories(); } // TODO: update weights with new memory
 
     // TODO: Add option to remove memory?
     
@@ -76,6 +76,12 @@ public:
     }
 
     void setWeightsFromMemories();
+
+    int getSign(int linearIndex);
+
+    void updateNode(int  linearIndex);
+
+    void asyncUpdatePass();
 
     Eigen::MatrixXd createMemoryMatrix();
 };

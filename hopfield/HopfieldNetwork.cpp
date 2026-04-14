@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 #include <Eigen/Dense>
 
 #include "helpers/file_helpers.hpp"
@@ -20,6 +21,7 @@ HopfieldNetwork::HopfieldNetwork(int rows, int cols, StoragePrescription sp, con
     setWeightsFromMemories();
 }
 
+// TODO: assess if this should be changed ito a constructor, and if it should include a storage prescription
 HopfieldNetwork HopfieldNetwork::fromFile(const std::string& filename) {
     // Example format: (rows, cols, data)
     // 4 4
@@ -92,7 +94,7 @@ void HopfieldNetwork::saveToFile(const std::string& filename) const {
 }
 
 MatrixXd HopfieldNetwork::createMemoryMatrix() {
-    MatrixXd result(mSize, mSize);
+    MatrixXd result(mMemories.size(), mSize);
 
     for(int i = 0; i < mMemories.size();  i++){
         result.row(i) = VectorXi::Map(mMemories.at(i).data(), mSize).cast<double>();
@@ -101,11 +103,46 @@ MatrixXd HopfieldNetwork::createMemoryMatrix() {
     return result;
 }
 
+// TODO: add functions to update weights rather than needing to calculate from scratch
 void HopfieldNetwork::setWeightsFromMemories() {
     MatrixXd memoriesMatrix = createMemoryMatrix();
+    MatrixXd weights(mSize, mSize);
 
-    // TODO: add  a swich case statement to switch based on the storage prescription
-    MatrixXd weights = (1/mMemories.size()) *  memoriesMatrix * memoriesMatrix.transpose();
+    switch (mStoragePrescription) // TODO: add other storage prescriptions
+    {
+    case HEBBIAN:
+        weights = (1.0 / mMemories.size()) *  memoriesMatrix * memoriesMatrix.transpose();
+        break;
+    
+    default:
+        std::cerr << "Error: Storage prescription has not been implemented";
+        break;
+    }
 
     mWeights = std::vector<float>(weights.data(), weights.data() + weights.rows() * weights.cols());
 }
+
+int HopfieldNetwork::getSign(int linearIndex){
+    float sum = 0;
+    for(int otherNodeIndex = 0; otherNodeIndex < mSize; otherNodeIndex++){
+        if (linearIndex != otherNodeIndex) {
+            sum += mActivationMatrix[otherNodeIndex] * weightAt(linearIndex, otherNodeIndex);
+        }
+    }
+
+    return sum > 0 ? 1 : -1;
+}
+
+void HopfieldNetwork::updateNode(int linearIndex){
+    int sign = getSign(linearIndex);
+    if( sign != mActivationMatrix[linearIndex]) { // TODO: may want some kind of way to have a hook to the frontend?
+        mActivationMatrix[linearIndex] = sign;
+    }
+}
+
+// N.B. Not sure if the unit of interest is an individual node update or a full pass of node updates
+void HopfieldNetwork::asyncUpdatePass() {
+    for (int node = 0; node < mSize; node ++) {
+        updateNode(node);
+    }
+} 
