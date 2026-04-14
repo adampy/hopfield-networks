@@ -144,8 +144,8 @@ int main() {
                     }
                 }
 
-                ImGui::SliderInt("Columns", state.getCols(), 1, 10);
-                ImGui::SliderInt("Rows", state.getRows(), 1, 10);
+                ImGui::SliderInt("Columns", state.getCols(), 1, 20);
+                ImGui::SliderInt("Rows", state.getRows(), 1, 20);
 
                 if (ImGui::Button("Create Network")) {
                     // Delete exisiting widget
@@ -167,7 +167,7 @@ int main() {
             }
         }
 
-        if (ImGui::CollapsingHeader("Memories")) {
+        if (ImGui::CollapsingHeader("Activations / Memories")) {
             // If loaded, show memories and display button
             if (state.getNetwork() != nullptr) {
                 for (int i = 0; i < state.getNetwork()->getMemories().size(); ++i) {
@@ -178,7 +178,19 @@ int main() {
                             state.getWidget()->setDirty();
                         }
                     }
+
+                    // Put delete button on same line
+                    ImGui::SameLine();
+
+                    // Unique ID using ## (invisible suffix)
+                    std::string deleteLabel = "Delete (and relearn)##mem_" + std::to_string(i);
+                    if (ImGui::Button(deleteLabel.c_str())) {
+                        state.getNetwork()->removeMemory(i, true);
+                    }
                 }
+
+                // add padding
+                ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
                 if (ImGui::Button("Set Activations to Random Pattern")) {
                     const int patternSize = state.getNetwork()->rows() * state.getNetwork()->cols(); // TODO: Rollup into single size method
@@ -189,8 +201,17 @@ int main() {
                     }
                 }
 
-                if (ImGui::Button("Save Activations as New Memory")) {
-                    state.getNetwork()->addMemory(state.getNetwork()->data());
+                if (ImGui::Button("Save Activations as New Memory (and relearn)")) {
+                    state.getNetwork()->addMemory(state.getNetwork()->data(), true);
+                }
+
+                if (ImGui::Button("Clear Activations")) {
+                    const int patternSize = state.getNetwork()->rows() * state.getNetwork()->cols(); // TODO: Rollup into single size method
+                    const std::vector<int> pattern(patternSize, 0);
+                    state.getNetwork()->setActivations(pattern);
+                    if (state.getWidget() != nullptr) {
+                        state.getWidget()->setDirty();
+                    }
                 }
             }
         }

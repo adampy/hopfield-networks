@@ -23,7 +23,7 @@ void HopfieldWidget::rebuild_instances() {
     }
 }
 
-void HopfieldWidget::paint_at(double mx, double my) {
+void HopfieldWidget::paint_at(double mx, double my, int targetValue) {
     if (mDrawWidth <= 0 || mDrawHeight <= 0) return;
     if (mx < mDrawX || mx >= mDrawX + mDrawWidth || my < mDrawY || my >= mDrawY + mDrawHeight) {
         mLastPaintIdx = -1;
@@ -43,7 +43,11 @@ void HopfieldWidget::paint_at(double mx, double my) {
     if (idx == mLastPaintIdx) return;
     mLastPaintIdx = idx;
 
-    mNetwork.at(row, col) = -mNetwork.at(row, col);
+    if (targetValue >= 0) {
+        mNetwork.at(row, col) = 1;
+    } else {
+        mNetwork.at(row, col) = -1;
+    }
 
     const float state = (mNetwork.at(row, col) > 0) ? 1.0f : 0.0f;
     mRenderInstances.at(idx).state = state;
@@ -193,14 +197,15 @@ void HopfieldWidget::draw(int fbWidth, int fbHeight) {
 }
 
 void HopfieldWidget::on_mouse_button(GLFWwindow* window, int button, int action, int mods) {
-    if (button != GLFW_MOUSE_BUTTON_LEFT) return;
+    if (button != GLFW_MOUSE_BUTTON_LEFT && button != GLFW_MOUSE_BUTTON_RIGHT) return;
 
     if (action == GLFW_PRESS) {
         mIsPainting = true;
+        mPaintValue = (button == GLFW_MOUSE_BUTTON_LEFT) ? 1 : -1;
         mLastPaintIdx = -1;
         double mx, my;
         glfwGetCursorPos(window, &mx, &my);
-        paint_at(mx, my);
+        paint_at(mx, my, mPaintValue);
     } else if (action == GLFW_RELEASE) {
         mIsPainting = false;
         mLastPaintIdx = -1;
@@ -209,5 +214,5 @@ void HopfieldWidget::on_mouse_button(GLFWwindow* window, int button, int action,
 
 void HopfieldWidget::on_cursor_pos(GLFWwindow* window, double xpos, double ypos) {
     if (!mIsPainting) return;
-    paint_at(xpos, ypos);
+    paint_at(xpos, ypos, mPaintValue);
 }

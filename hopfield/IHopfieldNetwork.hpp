@@ -28,7 +28,9 @@ public:
 
     virtual const std::vector<std::vector<int>>& getMemories() const = 0;
 
-    virtual void addMemory(const std::vector<int>& memory) = 0;
+    virtual void addMemory(const std::vector<int>& memory, bool recompute = false) = 0;
+
+    virtual void removeMemory(const int index, bool recompute = false) = 0;
 
     virtual void setActivations(const std::vector<int>& activations) = 0;
 

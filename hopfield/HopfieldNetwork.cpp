@@ -112,6 +112,21 @@ void HopfieldNetwork::saveToFile(const std::string& filename) const {
     writeToFile(toWrite.c_str(), filename.c_str());
 }
 
+void HopfieldNetwork::addMemory(const std::vector<int>& memory, bool recompute) {
+    mMemories.push_back(memory);
+    if (recompute) {
+        setWeightsFromMemories();
+    }
+}
+
+void HopfieldNetwork::removeMemory(const int index, bool recompute) {
+    mMemories.erase(mMemories.begin() + index);
+    if (recompute) {
+        setWeightsFromMemories();
+    }
+}
+
+
 MatrixXd HopfieldNetwork::createMemoryMatrix() {
     MatrixXd result(mSize, mMemories.size());
 

@@ -33,7 +33,7 @@ private:
     };
 
     void rebuild_instances();
-    void paint_at(double mx, double my);
+    void paint_at(double mx, double my, int targetValue);
 
     IHopfieldNetwork& mNetwork;
 
@@ -56,6 +56,7 @@ private:
     std::vector<RenderInstance> mRenderInstances = {};
     bool mIsDirty = true;
     bool mIsPainting = false;
+    int mPaintValue = 1;
     int mLastPaintIdx = -1;
 };
 
