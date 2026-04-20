@@ -145,15 +145,24 @@ void HopfieldNetwork::setWeightsFromMemories() {
     switch (mStoragePrescription) // TODO: add other storage prescriptions
     {
     case HEBBIAN:
-        weights = (1.0 / mMemories.size()) *  memoriesMatrix * memoriesMatrix.transpose();
+        weights = (1.0 / mSize) *  memoriesMatrix * memoriesMatrix.transpose();
         break;
     
+    case PSEUDO_INVERSE:
+        weights = (1.0 / mSize) *  memoriesMatrix * (memoriesMatrix.transpose() * memoriesMatrix).inverse() *  memoriesMatrix.transpose();
+        break;
+
+    // case STORKEY:
+    //     break;
+
     default:
         std::cerr << "Error: Storage prescription has not been implemented";
         break;
     }
 
     mWeights = std::vector<float>(weights.data(), weights.data() + weights.rows() * weights.cols());
+
+    // std::cerr << mWeights[0];
 }
 
 int HopfieldNetwork::getSign(int linearIndex) {
@@ -211,4 +220,16 @@ void HopfieldNetwork::infer(InferenceMode mode) {
             std::cerr << "Error: Sync update not implemented yet" << std::endl;
             break;
     }
+}
+
+float HopfieldNetwork::getEnergy() {
+    float energy = 0;
+    for (int linear1 = 0; linear1 < mSize; linear1++) {
+        for (int linear2 = 0; linear2 < mSize; linear2++) {
+            if (linear1 != linear2) {
+                energy -= mActivationMatrix[linear1] * mActivationMatrix[linear2] * weightAt(linear1, linear2);
+            }
+        }
+    }
+    return energy;
 }

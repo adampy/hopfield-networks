@@ -50,6 +50,8 @@ public:
     
     const std::vector<std::vector<int>>& getMemories() const override { return mMemories; }
 
+    float getEnergy();
+
     // Change current state
     void addMemory(const std::vector<int>& memory, bool recompute = false);
     void removeMemory(const int index, bool recompute = false);
