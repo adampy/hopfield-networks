@@ -41,8 +41,8 @@ public:
     int& at(int row, int col) override { return mActivationMatrix[getLinearIndex(row, col)]; } // This can edit values so should be private?
     int at(int row, int col) const override { return mActivationMatrix[getLinearIndex(row, col)]; }
 
-    float weightAt(int row1, int col1, int row2, int col2) const override { return mWeights[getLinearIndex(row1, col1, row2, col2)]; }
-    float weightAt(int linear1, int linear2) const { return mWeights[linear1 * mSize + linear2]; }
+    double weightAt(int row1, int col1, int row2, int col2) const override { return mWeights[getLinearIndex(row1, col1, row2, col2)]; }
+    double weightAt(int linear1, int linear2) const { return mWeights[linear1 * mSize + linear2]; }
 
 
     std::vector<int>& data() override { return mActivationMatrix; }
@@ -50,7 +50,7 @@ public:
     
     const std::vector<std::vector<int>>& getMemories() const override { return mMemories; }
 
-    float getEnergy();
+    double getEnergy();
 
     // Change current state
     void addMemory(const std::vector<int>& memory, bool recompute = false);
@@ -71,17 +71,17 @@ private:
     // N.B. should probably add some of this to the interface, will do that later
     int mRows, mCols, mSize;
     std::vector<int> mActivationMatrix; // -1 or 1
-    std::vector<float> mWeights;
+    std::vector<double> mWeights;
     std::vector<std::vector<int>> mMemories;
     StoragePrescription mStoragePrescription;
     
-    float& weightAt(int row1, int col1, int row2, int col2) { return mWeights[getLinearIndex(row1, col1, row2, col2)]; }
-    float& weightAt(int linear1, int linear2) { return mWeights[linear1 * mSize + linear2]; }
+    double& weightAt(int row1, int col1, int row2, int col2) { return mWeights[getLinearIndex(row1, col1, row2, col2)]; }
+    double& weightAt(int linear1, int linear2) { return mWeights[linear1 * mSize + linear2]; }
 
-    void updateWeight(int row1, int col1, int row2, int col2, float weight) { 
+    void updateWeight(int row1, int col1, int row2, int col2, double weight) { 
         weightAt(row1, col1, row2, col2) = weightAt(row2, col2, row1, col1) = weight;
     }
-    void updateWeight(int linear1, int linear2, float weight) { 
+    void updateWeight(int linear1, int linear2, double weight) { 
         weightAt(linear1, linear2) = weightAt(linear2, linear1) = weight;
     }
 
@@ -98,6 +98,8 @@ private:
     void asyncUpdatePass(InferenceMode mode);
 
     Eigen::MatrixXd createMemoryMatrix();
+
+    Eigen::MatrixXd storekeyWeight(std::vector<int> pattern);
 };
 
 #endif // HOPFIELD_NETWORK

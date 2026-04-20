@@ -21,7 +21,7 @@ public:
     virtual int& at(int row, int col) = 0;
     virtual int at(int row, int col) const = 0;
 
-    virtual float weightAt(int row1, int col1, int row2, int col2) const = 0;
+    virtual double weightAt(int row1, int col1, int row2, int col2) const = 0;
 
     virtual std::vector<int>& data() = 0;
     virtual const std::vector<int>& data() const = 0;

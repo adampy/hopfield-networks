@@ -140,29 +140,46 @@ MatrixXd HopfieldNetwork::createMemoryMatrix() {
 // TODO: add functions to update weights rather than needing to calculate from scratch
 void HopfieldNetwork::setWeightsFromMemories() {
     MatrixXd memoriesMatrix = createMemoryMatrix();
-    MatrixXd weights(mSize, mSize);
+    MatrixXd weights(mSize, mSize, 0);
 
-    switch (mStoragePrescription) // TODO: add other storage prescriptions
+    switch (mStoragePrescription) 
     {
-    case HEBBIAN:
+    case HEBBIAN: // should add a new function to simply add a new memory for this
         weights = (1.0 / mSize) *  memoriesMatrix * memoriesMatrix.transpose();
         break;
     
-    case PSEUDO_INVERSE:
+    case PSEUDO_INVERSE: // Think this needs to be recalculated in full for each  new memory
         weights = (1.0 / mSize) *  memoriesMatrix * (memoriesMatrix.transpose() * memoriesMatrix).inverse() *  memoriesMatrix.transpose();
         break;
 
-    // case STORKEY:
-    //     break;
+    case STORKEY:
+        for( std::vector<int> memory : mMemories) {
+            weights += storekeyWeight(memory);
+        }
 
     default:
         std::cerr << "Error: Storage prescription has not been implemented";
         break;
     }
 
-    mWeights = std::vector<float>(weights.data(), weights.data() + weights.rows() * weights.cols());
+    mWeights = std::vector<double>(weights.data(), weights.data() + weights.rows() * weights.cols());
 
     // std::cerr << mWeights[0];
+}
+
+MatrixXd HopfieldNetwork::storekeyWeight(std::vector<int> pattern) {
+    VectorXd patternVector = VectorXi::Map(pattern.data(), mSize).cast<double>();
+    Map<MatrixXd> h(mWeights.data(), mSize, mSize);
+
+    for( int linearIndex = 0; linearIndex < mSize; linearIndex++) {
+        for(int otherNodeIndex = 0; otherNodeIndex < mSize; otherNodeIndex++){
+            if (linearIndex != otherNodeIndex) {
+                h[linearIndex] += mActivationMatrix[otherNodeIndex] * weightAt(linearIndex, otherNodeIndex);
+            }
+        }
+    }
+
+    return (1.0 / mSize) * (patternVector * patternVector.transpose() - patternVector * h.transpose() - h * patternVector.transpose()); // Add special storekey stuff here
 }
 
 int HopfieldNetwork::getSign(int linearIndex) {
@@ -222,8 +239,8 @@ void HopfieldNetwork::infer(InferenceMode mode) {
     }
 }
 
-float HopfieldNetwork::getEnergy() {
-    float energy = 0;
+double HopfieldNetwork::getEnergy() {
+    double energy = 0;
     for (int linear1 = 0; linear1 < mSize; linear1++) {
         for (int linear2 = 0; linear2 < mSize; linear2++) {
             if (linear1 != linear2) {
