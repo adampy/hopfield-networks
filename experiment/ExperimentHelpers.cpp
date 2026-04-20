@@ -1,6 +1,8 @@
 #include "experiment/ExperimentHelpers.hpp"
 
 #include <random>
+#include <stdexcept>
+#include <vector>
 
 std::vector<int> generateRandomPattern(const int size) {
     std::vector<int> pattern(size);
@@ -24,12 +26,33 @@ std::vector<std::vector<int>> generateRandomPatterns(
 
 void infuseWithNoise(std::vector<int>& pattern,
         const float noiseLevel) {
-    // implementation goes here
+    // Clamp noise between 0 and 1 inclusive
+    const float p = std::max(0.f, std::min(1.f, noiseLevel));
+    
+    // Infuse noise
+    std::random_device rd; // generates random seed
+    std::mt19937 rng(rd());
+    std::bernoulli_distribution flipDist(p);
+    for (int i = 0; i < pattern.size(); i++) {
+        if (flipDist(rng)) {
+            pattern[i] = -pattern[i];
+        }
+    }
 }
 
 float computeOverlap(const std::vector<int>& pattern1,
         const std::vector<int>& pattern2) {
-    // implementation goes here
-    return 0.f;
+    if (pattern1.size() != pattern2.size()) {
+        throw std::invalid_argument("Patterns must be the same size");
+    }
+    
+    int overlapSum = 0;
+    for (int i = 0; i < pattern1.size(); i++) {
+        if (pattern1[i] == pattern2[i]) {
+            overlapSum += pattern1[i] * pattern2[i];
+        }
+    }
+    
+    return static_cast<float>(overlapSum) / static_cast<float>(pattern1.size());
 }
 

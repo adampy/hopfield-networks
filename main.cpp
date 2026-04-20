@@ -169,10 +169,14 @@ int main() {
 
         if (ImGui::CollapsingHeader("Activations / Memories")) {
             // If loaded, show memories and display button
-            if (state.getNetwork() != nullptr) {
+            if (state.getNetwork() == nullptr) {
+                ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "No network loaded");
+            } else {
+                ImGui::Text("Manage stored memories and handle current activations. When deleting a memory, the network instantly re-learns.");
+                ImGui::Text("Set activations to memory...");
                 for (int i = 0; i < state.getNetwork()->getMemories().size(); ++i) {
                     const auto& memory = state.getNetwork()->getMemories().at(i);
-                    if (ImGui::Button(("Set Activations to Memory " + std::to_string(i)).c_str())) {
+                    if (ImGui::Button((std::to_string(i)).c_str())) {
                         state.getNetwork()->setActivations(memory);
                         if (state.getWidget() != nullptr) {
                             state.getWidget()->setDirty();
@@ -183,9 +187,46 @@ int main() {
                     ImGui::SameLine();
 
                     // Unique ID using ## (invisible suffix)
-                    std::string deleteLabel = "Delete (and relearn)##mem_" + std::to_string(i);
-                    if (ImGui::Button(deleteLabel.c_str())) {
+                    std::string deleteLabel = "X##delete_" + std::to_string(i);
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.80f, 0.15f, 0.15f, 1.00f));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.90f, 0.20f, 0.20f, 1.00f));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.70f, 0.10f, 0.10f, 1.00f));
+                    const bool didDelete = ImGui::Button(deleteLabel.c_str());
+                    if (didDelete) {
                         state.getNetwork()->removeMemory(i, true);
+                        if (state.getWidget() != nullptr) {
+                            state.getWidget()->setDirty();
+                        }
+                    }
+                    ImGui::PopStyleColor(3);
+
+                    if (didDelete) {
+                        break;
+                    }
+
+                    ImGui::SameLine();
+                    ImGui::Text("M(%d, curr) = %.2f", i,
+                        computeOverlap(
+                            state.getNetwork()->getMemories().at(i),
+                            state.getNetwork()->data()));
+                }
+
+                if (ImGui::Button("Save Activations as New Memory (and relearn)")) {
+                    state.getNetwork()->addMemory(state.getNetwork()->data(), true);
+                }
+
+                // add padding
+                ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+                ImGui::Text("Infuse the current activations with bit-flip noise:");
+                ImGui::SliderFloat("##infuse_noise_level", state.getInfusionNoiseLevel(), 0.0f, 1.0f, "%.2f");
+                ImGui::SameLine();
+                if (ImGui::Button("Infuse")) {
+                    auto newPattern = state.getNetwork()->data();
+                    infuseWithNoise(newPattern, *state.getInfusionNoiseLevel());
+                    state.getNetwork()->setActivations(newPattern);
+                    if (state.getWidget() != nullptr) {
+                        state.getWidget()->setDirty();
                     }
                 }
 
@@ -201,9 +242,7 @@ int main() {
                     }
                 }
 
-                if (ImGui::Button("Save Activations as New Memory (and relearn)")) {
-                    state.getNetwork()->addMemory(state.getNetwork()->data(), true);
-                }
+                ImGui::SameLine();
 
                 if (ImGui::Button("Clear Activations")) {
                     const int patternSize = state.getNetwork()->rows() * state.getNetwork()->cols(); // TODO: Rollup into single size method
@@ -254,20 +293,18 @@ int main() {
 
         // Manual inference options
         if (ImGui::CollapsingHeader("Inference")) {
-            if (ImGui::Button("Asynchronous (sequential) pass")) {
-                if (state.getNetwork() != nullptr) {
+            if (state.getNetwork() == nullptr) {
+                ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "No network loaded");
+            } else {
+                if (ImGui::Button("Asynchronous (sequential) pass")) {
                     state.getNetwork()->infer(InferenceMode::ASYNC_SEQUENTIAL);
                     state.getWidget()->setDirty();
                 }
-            }
-            if (ImGui::Button("Asynchronous (random) pass")) {
-                if (state.getNetwork() != nullptr) {
+                if (ImGui::Button("Asynchronous (random) pass")) {
                     state.getNetwork()->infer(InferenceMode::ASYNC_RANDOM);
                     state.getWidget()->setDirty();
                 }
-            }
-            if (ImGui::Button("Synchronous pass")) {
-                if (state.getNetwork() != nullptr) {
+                if (ImGui::Button("Synchronous pass")) {
                     state.getNetwork()->infer(InferenceMode::SYNC);
                     state.getWidget()->setDirty();
                 }

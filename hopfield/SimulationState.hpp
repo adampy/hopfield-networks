@@ -18,7 +18,8 @@ public:
     SimulationState() : mCols(3), mRows(5), mShouldDrawNetwork(false), 
         mWidget(nullptr), mNetwork(nullptr),
         mStoragePrescription(StoragePrescription::HEBBIAN), mNoiseLevel(0.0f),
-        mWidgetScale(1.0f), mNumTrials1(3), mNumTrials2(3), mRetrievalThreshold1(0.95),
+        mWidgetScale(1.0f), mInfusionNoiseLevel(0.f), mNumTrials1(3),
+        mNumTrials2(3), mRetrievalThreshold1(0.95),
         mRetrievalThreshold3(0.95), mNetworkSize(100), mMaxSaturation(0.1f) {}
 
     std::vector<int> getParsedNetworkSizes() const;
@@ -37,6 +38,8 @@ public:
     int* getStoragePrescription() { return &mStoragePrescription; }
     float* getNoiseLevel() { return &mNoiseLevel; }
     float* getWidgetScale() { return &mWidgetScale; }
+    float* getInfusionNoiseLevel() { return &mInfusionNoiseLevel; }
+
     char* getNetworkSizes() { return mNetworkSizes; }
     std::size_t getNetworkSizesCapacity() const { return sizeof(mNetworkSizes); } // needed for ImGui::InputText
     int* getNumTrials1() { return &mNumTrials1; }
@@ -59,6 +62,7 @@ private:
     int mStoragePrescription;
     float mNoiseLevel;
     float mWidgetScale;
+    float mInfusionNoiseLevel;
 
     // Experiment related data members
     char mNetworkSizes[256];
