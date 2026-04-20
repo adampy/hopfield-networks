@@ -227,7 +227,7 @@ int main() {
                     ImGui::Text("Loaded %d memories", memories);
 
                     // radio buttons on storage prescription
-                    ImGui::Text("Storage prescription:");
+                    ImGui::Text("Adjust storage prescription:");
                     ImGui::RadioButton("Hebbian", state.getStoragePrescription(),
                         StoragePrescription::HEBBIAN);
                     ImGui::RadioButton("Pseudo-inverse", state.getStoragePrescription(),
@@ -235,9 +235,17 @@ int main() {
                     ImGui::RadioButton("Storkey", state.getStoragePrescription(),
                         StoragePrescription::STORKEY);
 
-                    if (ImGui::Button("Learn memories")) {
+                    // Yellow text warning if diff storage prescription selected
+                    if (*state.getStoragePrescription() != state.getNetwork()->getStoragePrescription()) {
+                        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Warning: Storage prescription changed - re-learn memories to apply");
+                    }
+
+                    if (ImGui::Button("Set storage prescription & re-learn memories")) {
                         if (state.getNetwork() != nullptr) {
-                            // use learning method with state.getNetwork()->getMemories() to learn weights
+                            state.getNetwork()->setStoragePrescription(
+                                static_cast<StoragePrescription>(*state.getStoragePrescription()));
+                            state.getNetwork()->setWeightsFromMemories();
+                            state.getWidget()->setDirty();
                         }
                     }
                 }

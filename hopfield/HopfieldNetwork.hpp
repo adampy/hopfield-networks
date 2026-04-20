@@ -12,13 +12,18 @@
  * and associated memories.
  
  * @author Adam Crawley
+ * @author William Kingdon
  */
 class HopfieldNetwork : public IHopfieldNetwork {
 public:
-    // Constructor with no data
+    /**
+     * Constructor with no data
+     */
     HopfieldNetwork(int rows, int cols, StoragePrescription sp);
 
-    // Constructor with memories - memories are learnt in this method with sp
+    /**
+     * Constructor with memories - memories are learnt in this method with sp
+     */
     HopfieldNetwork(int rows, int cols, StoragePrescription sp, const std::vector<std::vector<int>>& memories);
         // : mRows(rows), mCols(cols), mActivationMatrix(rows * cols, -1), mWeights(mSize * mSize, 0), mMemories(memories) {}
 
@@ -29,7 +34,7 @@ public:
      */
     HopfieldNetwork(const std::string& filename);
 
-    // Get current state:
+    #pragma region Getters for current state
     void saveToFile(const std::string& filename) const override;
 
     int rows() const override { return mRows; }
@@ -50,13 +55,12 @@ public:
     
     const std::vector<std::vector<int>>& getMemories() const override { return mMemories; }
 
-    double getEnergy();
+    double getEnergy() const;
+    #pragma endregion
 
-    // Change current state
+    #pragma region Change current state
     void addMemory(const std::vector<int>& memory, bool recompute = false);
     void removeMemory(const int index, bool recompute = false);
-
-    // TODO: Add option to remove memory?
     
     void setActivations(const std::vector<int>& activations) override { mActivationMatrix = activations; }
     
@@ -66,6 +70,18 @@ public:
      * @note No convergence checking included (since this is a single pass)
      */
     void infer(InferenceMode mode); // TODO: Remove old update method?
+    
+    StoragePrescription getStoragePrescription() const override { return mStoragePrescription; }
+
+    void setStoragePrescription(StoragePrescription sp) override { mStoragePrescription = sp; }
+
+    /**
+     * Recalculate network weights using the stored memories and storage
+     * prescription.
+     */
+    void setWeightsFromMemories();
+
+    #pragma endregion
 
 private:
     // N.B. should probably add some of this to the interface, will do that later
@@ -85,8 +101,6 @@ private:
         weightAt(linear1, linear2) = weightAt(linear2, linear1) = weight;
     }
 
-    void setWeightsFromMemories();
-
     int getSign(int linearIndex);
 
     void updateNode(int linearIndex);
@@ -97,9 +111,19 @@ private:
      */
     void asyncUpdatePass(InferenceMode mode);
 
+    /**
+     * Creates a matrix from the memories where each column vector is a memory
+     * @return The memory matrix
+     */
     Eigen::MatrixXd createMemoryMatrix();
 
-    Eigen::MatrixXd storekeyWeight(std::vector<int> pattern);
+    /**
+     * Compute the incremental change to the weight matrix for a single pattern
+     * using the Storekey rule
+     * @param pattern The pattern to compute the weight change for
+     * @return The incremental weight change matrix
+     */
+    Eigen::MatrixXd storekeyWeight(const std::vector<int>& pattern);
 };
 
 #endif // HOPFIELD_NETWORK

@@ -4,12 +4,14 @@
 #include <vector>
 #include <string>
 #include "hopfield/InferenceMode.hpp"
+#include "hopfield/StoragePrescription.hpp"
 
 /**
  * Interface for a Hopfield network with activation matrix
  * and associated memories.
  * 
  * @author Adam Crawley
+ * @author William Kingdon
  */
 class IHopfieldNetwork {
 public:
@@ -37,6 +39,12 @@ public:
     virtual void saveToFile(const std::string& filename) const = 0;
 
     virtual void infer(InferenceMode mode) = 0;
+
+    virtual StoragePrescription getStoragePrescription() const = 0;
+
+    virtual void setStoragePrescription(StoragePrescription sp) = 0;
+
+    virtual void setWeightsFromMemories() = 0;
 };
 
 #endif // IHOPFIELD_NETWORK

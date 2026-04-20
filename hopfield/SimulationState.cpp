@@ -48,6 +48,7 @@ void SimulationState::setNetwork(IHopfieldNetwork* network) {
     this->mNetwork = network;
     this->mRows = network->rows();
     this->mCols = network->cols();
+    this->mStoragePrescription = network->getStoragePrescription();
 }
 
 int SimulationState::makeWidgetFromNetwork(GLFWwindow* window) {    

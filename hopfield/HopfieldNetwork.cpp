@@ -140,7 +140,8 @@ MatrixXd HopfieldNetwork::createMemoryMatrix() {
 // TODO: add functions to update weights rather than needing to calculate from scratch
 void HopfieldNetwork::setWeightsFromMemories() {
     MatrixXd memoriesMatrix = createMemoryMatrix();
-    MatrixXd weights(mSize, mSize, 0);
+    MatrixXd weights(mSize, mSize);
+    weights.setZero();
 
     switch (mStoragePrescription) 
     {
@@ -153,7 +154,7 @@ void HopfieldNetwork::setWeightsFromMemories() {
         break;
 
     case STORKEY:
-        for( std::vector<int> memory : mMemories) {
+        for(const std::vector<int>& memory : mMemories) {
             weights += storekeyWeight(memory);
         }
 
@@ -167,19 +168,24 @@ void HopfieldNetwork::setWeightsFromMemories() {
     // std::cerr << mWeights[0];
 }
 
-MatrixXd HopfieldNetwork::storekeyWeight(std::vector<int> pattern) {
+MatrixXd HopfieldNetwork::storekeyWeight(const std::vector<int>& pattern) {
     VectorXd patternVector = VectorXi::Map(pattern.data(), mSize).cast<double>();
-    Map<MatrixXd> h(mWeights.data(), mSize, mSize);
+    
+    // Define local field
+    VectorXd h(mSize);
+    h.setZero();
 
     for( int linearIndex = 0; linearIndex < mSize; linearIndex++) {
         for(int otherNodeIndex = 0; otherNodeIndex < mSize; otherNodeIndex++){
             if (linearIndex != otherNodeIndex) {
-                h[linearIndex] += mActivationMatrix[otherNodeIndex] * weightAt(linearIndex, otherNodeIndex);
+                h(linearIndex) += patternVector(otherNodeIndex) * weightAt(linearIndex, otherNodeIndex);
             }
         }
     }
 
-    return (1.0 / mSize) * (patternVector * patternVector.transpose() - patternVector * h.transpose() - h * patternVector.transpose()); // Add special storekey stuff here
+    MatrixXd dW = (1.0 / mSize) * (patternVector * patternVector.transpose() - patternVector * h.transpose() - h * patternVector.transpose()); // Add special storekey stuff here
+    dW.diagonal().setZero(); // Remove self-connections if they exist
+    return dW;
 }
 
 int HopfieldNetwork::getSign(int linearIndex) {
@@ -239,7 +245,7 @@ void HopfieldNetwork::infer(InferenceMode mode) {
     }
 }
 
-double HopfieldNetwork::getEnergy() {
+double HopfieldNetwork::getEnergy() const {
     double energy = 0;
     for (int linear1 = 0; linear1 < mSize; linear1++) {
         for (int linear2 = 0; linear2 < mSize; linear2++) {
