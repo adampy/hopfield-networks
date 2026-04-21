@@ -34,6 +34,8 @@ public:
 
     virtual void removeMemory(const int index, bool recompute = false) = 0;
 
+    virtual const std::vector<int>& getActivations() const = 0;
+
     virtual void setActivations(const std::vector<int>& activations) = 0;
 
     virtual void saveToFile(const std::string& filename) const = 0;

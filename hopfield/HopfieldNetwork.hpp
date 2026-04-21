@@ -62,6 +62,7 @@ public:
     void addMemory(const std::vector<int>& memory, bool recompute = false);
     void removeMemory(const int index, bool recompute = false);
     
+    const std::vector<int>& getActivations() const override { return mActivationMatrix; }
     void setActivations(const std::vector<int>& activations) override { mActivationMatrix = activations; }
     
     /**

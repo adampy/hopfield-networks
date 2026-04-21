@@ -1,7 +1,10 @@
-#include "experiment/ExperimentRunner.hpp"
-#include "experiment/ExperimentHelpers.hpp"
 #include <chrono>
 #include <iostream>
+#include "experiment/ExperimentRunner.hpp"
+#include "experiment/ExperimentHelpers.hpp"
+#include "hopfield/HopfieldNetwork.hpp"
+#include "hopfield/StoragePrescription.hpp"
+
 
 
 void ExperimentRunner::startExperiment1(std::vector<int> sizes, int numTrials) {
@@ -15,48 +18,85 @@ void ExperimentRunner::startExperiment1(std::vector<int> sizes, int numTrials) {
     setExperiment1Progress(0.0f);
 
     mExp1Worker = std::thread([sizes = std::move(sizes), numTrials, this]() {
-        const std::size_t total = sizes.size();
-        if (total == 0) {
+        const std::size_t numNetworkSizes = sizes.size();
+        if (numNetworkSizes == 0) {
             setExperiment1Progress(1.0f);
             setExperiment1Running(false);
             return;
         }
 
         // EXPERIMENT GOES HERE
+        const std::vector<StoragePrescription> storagePrescriptions = {HEBBIAN, PSEUDO_INVERSE, STORKEY};
+        
+        // These are used to track crude progress percentage
+        const int numSubExperiments = numNetworkSizes * storagePrescriptions.size();
+        int subExperimentIndex = 0;
+        
+        // for each storage prescription
+        for (int spIndex = 0; spIndex < storagePrescriptions.size(); ++spIndex) {
+            const StoragePrescription storagePrescription = storagePrescriptions[spIndex];
 
-        const int patternSize = 100;
+            // for each network size
+            for (std::size_t i = 0; i < numNetworkSizes; ++i) {
+                const int networkSize = sizes[i];
+                const int rows = networkSize / 2;
+                const int cols = networkSize / 2;
+                std::cout << "Running experiment for network size: " << networkSize << std::endl;
+                setExperiment1Progress(static_cast<double>(subExperimentIndex) / static_cast<double>(numSubExperiments));
 
-        for (std::size_t i = 0; i < total; ++i) {
-            std::cout << "Running experiment for network size: " << sizes[i] << std::endl;
-            setExperiment1Progress(static_cast<double>(i) / static_cast<double>(total));
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                // std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-            const int networkSize = sizes[i];
-            double bestCapacity = 0.0;
+                
+                double meanSuccessRate = 0.0;
 
-            for (int p = 1; p <= networkSize; ++p){
-                int successCount = 0;
+                int p = 0; // number of patterns to try store in network
+                std::vector<double> successRates; // stores success rate for current p for each trial
+                do {
+                    p++;
+                    successRates.clear();
 
-                for (int trial = 0; trial < numTrials; ++trial) {
-                    std::vector<std::vector<int>> patterns = generateRandomPatterns(p, networkSize);
+                    for (int trial = 0; trial < numTrials; ++trial) {
+                        const std::vector<std::vector<int>> patterns = generateRandomPatterns(p, networkSize);
 
-                    //auto weights = // train a hopfield network using patterns
-                    
-                    // pick a few patterns then remove them
+                        // train a hopfield network using patterns
+                        HopfieldNetwork network(rows, cols, storagePrescription, patterns);
+                        
+                        // iterate throuh all patterns then remove them
 
-                    // use the hopfield network to try to get them back
+                            // infuse pattern with noise (make noise a function argument with default 10% or 20%)
 
-                    // check if it is successful or not
+                            // use the hopfield network to try to get them back
+                            //     (need to implement convergence detection - see report at end of 2.2.1 Asynchronous)
+                            // 
+                            //     code will look something like
+                            //
+                            //     std::vector<int> noisyPattern = pattern;
+                            //     infuseWithNoise(noisyPattern, 0.1f);
+                            //     network.setActivations(noisyPattern);
+                            //     while not converged:
+                            //         network.infer(InferenceMode::ASYNC_SEQUENTIAL); // OR ASYNC_RANDOM - it doesn't really matter
+                            //     check overlap using network
+                            //         computeOverlap(pattern, network.getActivations())
+                            
+                            // check if it is successful or not (i.e. overlap >= 0.95)
 
+                                // if so add to successCount
+                        
+                        // add successCount/P to successRates
 
-                }
+                    }
+                    // calculate meanSuccessRate from successRates
+
+                } while (meanSuccessRate >= 0.95); // TODO: Make 0.95 a function argument
+
+                // max storeable patterns (P_c) is p-1
+
+                // critical storage capacity (alpha_c) is P_c / N
+
+                // store all alpha_c's then graph later
+
+                subExperimentIndex++; // used to track progress
             }
-
-            // success rate
-
-            // calculate a threshold
-
-            setExperiment1Progress(static_cast<double>(i + 1) / static_cast<double>(total));
         }
 
         // END OF EXPERIMENT
