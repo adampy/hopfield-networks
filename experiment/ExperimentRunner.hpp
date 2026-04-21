@@ -29,7 +29,7 @@ public:
     void setExperiment1Progress(float progress) { mExp1Progress.store(progress, std::memory_order_relaxed); }
 
     // Run experiments
-    void startExperiment1(std::vector<int> sizes);
+    void startExperiment1(std::vector<int> sizes, int numTrials);
 
 private:
     std::atomic<bool> mExp1Running;

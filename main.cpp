@@ -327,7 +327,8 @@ int main() {
             }
             if (ImGui::Button("Run Experiment 1")) {
                 const auto sizes = state.getParsedNetworkSizes();
-                experiments.startExperiment1(sizes);
+                const int numTrials = *state.getNumTrials1();
+                experiments.startExperiment1(sizes, numTrials);
             }
             if (exp1IsRunning) {
                 ImGui::EndDisabled();
