@@ -48,9 +48,7 @@ float computeOverlap(const std::vector<int>& pattern1,
     
     int overlapSum = 0;
     for (int i = 0; i < pattern1.size(); i++) {
-        if (pattern1[i] == pattern2[i]) {
-            overlapSum += pattern1[i] * pattern2[i];
-        }
+        overlapSum += pattern1[i] * pattern2[i];
     }
     
     return static_cast<float>(overlapSum) / static_cast<float>(pattern1.size());

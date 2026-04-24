@@ -1,3 +1,11 @@
+# Build files
 build/
+
+# ImGUI state
 imgui.ini
+
+# Stored network state
 state.hpf
+
+# Prevents Eigen being pushed to repo
+external/
