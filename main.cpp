@@ -336,21 +336,56 @@ int main() {
         }
 
         if (ImGui::CollapsingHeader("Experiment 2")) {
-            ImGui::Text("3x Heatmaps of retrieval success vs saturation and noise level");
-            ImGui::InputInt("Network Size", state.getNetworkSize());
+            ImGui::Text("Retrieval success vs Load");
+            ImGui::InputInt("Network Size##exp2", state.getNetworkSize2());
             ImGui::InputInt("Number of trials##exp2", state.getNumTrials2());
-            ImGui::SliderFloat("Max Saturation", state.getMaxSaturation(), 0.0f, 1.0f);
-            ImGui::SliderFloat("Max Noise", state.getMaxNoise(), 0.0f, 1.0f);
+            ImGui::SliderFloat("Retrieval Success Threshold##exp2", state.getRetrievalThreshold1(), 0.0f, 1.0f);
+            const bool exp2IsRunning = experiments.isExperiment2Running();
+            if (exp2IsRunning) {
+                ImGui::BeginDisabled();
+            }
             if (ImGui::Button("Run Experiment 2")) {
                 // TODO: Run experiment
+            }
+            if (exp2IsRunning) {
+                ImGui::EndDisabled();
             }
         }
 
         if (ImGui::CollapsingHeader("Experiment 3")) {
-            ImGui::Text("Critical Noise (i.e. noise level where all patterns retrieved with given threshold) vs saturation");
-            ImGui::SliderFloat("Retrieval Success Threshold##exp3", state.getRetrievalThreshold3(), 0.0f, 1.0f);
+            ImGui::Text("3x Heatmaps of retrieval success vs saturation and noise level");
+            ImGui::InputInt("Network Size##exp3", state.getNetworkSize3());
+            ImGui::InputInt("Number of trials##exp", state.getNumTrials3());
+            ImGui::SliderFloat("Max Saturation", state.getMaxSaturation(), 0.0f, 1.0f);
+            ImGui::SliderFloat("Max Noise", state.getMaxNoise(), 0.0f, 1.0f);
+            const bool exp3IsRunning = experiments.isExperiment3Running();
+            if (exp3IsRunning) {
+                ImGui::BeginDisabled();
+            }
             if (ImGui::Button("Run Experiment 3")) {
-                // TODO: Run experiment
+                const int size = *state.getNetworkSize3();
+                const int numTrials = *state.getNumTrials3();
+                const float maxSaturation = *state.getMaxSaturation();
+                const float maxNoise = *state.getMaxNoise();
+                experiments.startExperiment3(size, numTrials, maxSaturation, maxNoise, 0.01f, 0.01f);
+            }
+            if (exp3IsRunning) {
+                ImGui::EndDisabled();
+            }
+        }
+
+        if (ImGui::CollapsingHeader("Experiment 4")) {
+            ImGui::Text("Critical Noise (i.e. noise level where all patterns retrieved with given threshold) vs saturation");
+            ImGui::SliderFloat("Retrieval Success Threshold##exp4", state.getRetrievalThreshold4(), 0.0f, 1.0f);
+            const bool exp4IsRunning = experiments.isExperiment4Running();
+            if (exp4IsRunning) {
+                ImGui::BeginDisabled();
+            }
+            if (ImGui::Button("Run Experiment 4")) {
+                // TODO: Run experiment 4
+            }
+            if (exp4IsRunning) {
+                ImGui::EndDisabled();
             }
         }
 

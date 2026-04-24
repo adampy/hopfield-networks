@@ -6,8 +6,7 @@
 #include "hopfield/StoragePrescription.hpp"
 
 
-
-void ExperimentRunner::startExperiment1(std::vector<int> sizes, int numTrials) {
+void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int numTrials) {
     if (isExperiment1Running()) {
         return;
     }
@@ -17,7 +16,7 @@ void ExperimentRunner::startExperiment1(std::vector<int> sizes, int numTrials) {
     setExperiment1Running(true);
     setExperiment1Progress(0.0f);
 
-    mExp1Worker = std::thread([sizes = std::move(sizes), numTrials, this]() {
+    mExp1Worker = std::thread([&sizes, numTrials, this]() {
         const std::size_t numNetworkSizes = sizes.size();
         if (numNetworkSizes == 0) {
             setExperiment1Progress(1.0f);
@@ -106,8 +105,72 @@ void ExperimentRunner::startExperiment1(std::vector<int> sizes, int numTrials) {
     });
 }
 
+void ExperimentRunner::startExperiment3(const int size, const int numTrials,
+        const float maxSaturation, const float maxNoise,
+        const float saturationRes, const float noiseRes) {
+    if (isExperiment3Running()) {
+        return;
+    }
+
+    join();
+
+    setExperiment3Running(true);
+    setExperiment3Progress(0.0f);
+
+    mExp3Worker = std::thread([size, numTrials, maxSaturation, maxNoise, saturationRes, noiseRes, this]() {
+        const std::vector<StoragePrescription> storagePrescriptions = {HEBBIAN, PSEUDO_INVERSE, STORKEY};
+
+        // Calculate how many subexperiments there are
+        std::cout << maxSaturation << " " << saturationRes << std::endl;
+        std::cout << maxNoise << " " << noiseRes << std::endl;
+        const int numSaturationLevels = (maxSaturation / saturationRes) + 1;
+        const int numNoiseLevels = (maxNoise / noiseRes) + 1;
+        const int numSubExperiments = numTrials * numSaturationLevels * numNoiseLevels * storagePrescriptions.size();
+        std::cout << "Total sub-experiments: " << numSubExperiments << std::endl;
+        int subExperimentIndex = 0;
+
+        for (int spIndex = 0; spIndex < storagePrescriptions.size(); ++spIndex) {
+            const StoragePrescription storagePrescription = storagePrescriptions[spIndex];
+
+            // Experiment
+            setExperiment3Progress(static_cast<double>(subExperimentIndex) / static_cast<double>(numSubExperiments));
+            
+            // initialise heatmap
+            std::vector<std::vector<float>> heatmap(
+                numSaturationLevels,
+                std::vector<float>(numNoiseLevels, 0.0f)
+            );
+
+            for (int a = 0; a < numSaturationLevels; ++a) {
+                double alpha = a * saturationRes; // alpha_a
+                const int P = static_cast<int>(std::floor(alpha * size));
+                
+                std::cout << "alpha: " << alpha << " P: " << P << std::endl;
+            }
+            
+        }
+
+        // END OF EXPERIMENT
+
+        setExperiment3Progress(1.0f);
+        setExperiment3Running(false);
+    });
+}
+
 void ExperimentRunner::join() {
     if (mExp1Worker.joinable()) {
         mExp1Worker.join();
+    }
+    
+    if (mExp2Worker.joinable()) {
+        mExp2Worker.join();
+    }
+
+    if (mExp3Worker.joinable()) {
+        mExp3Worker.join();
+    }
+
+    if (mExp4Worker.joinable()) {
+        mExp4Worker.join();
     }
 }

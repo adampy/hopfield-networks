@@ -15,12 +15,14 @@
 class SimulationState {
 public:
 
-    SimulationState() : mCols(3), mRows(5), mShouldDrawNetwork(false), 
+    SimulationState() :
+        mCols(3), mRows(5), mShouldDrawNetwork(false),
         mWidget(nullptr), mNetwork(nullptr),
         mStoragePrescription(StoragePrescription::HEBBIAN), mNoiseLevel(0.0f),
         mWidgetScale(1.0f), mInfusionNoiseLevel(0.f), mNumTrials1(3),
-        mNumTrials2(3), mRetrievalThreshold1(0.95),
-        mRetrievalThreshold3(0.95), mNetworkSize(100), mMaxSaturation(0.1f) {}
+        mNumTrials2(3), mNumTrials3(3), mRetrievalThreshold1(0.95),
+        mRetrievalThreshold4(0.95), mNetworkSize2(100), mNetworkSize3(100),
+        mMaxSaturation(0.1f), mMaxNoise(0.1f) {}
 
     std::vector<int> getParsedNetworkSizes() const;
 
@@ -44,9 +46,11 @@ public:
     std::size_t getNetworkSizesCapacity() const { return sizeof(mNetworkSizes); } // needed for ImGui::InputText
     int* getNumTrials1() { return &mNumTrials1; }
     int* getNumTrials2() { return &mNumTrials2; }
+    int* getNumTrials3() { return &mNumTrials3; }
     float* getRetrievalThreshold1() { return &mRetrievalThreshold1; }
-    float* getRetrievalThreshold3() { return &mRetrievalThreshold3; }
-    int* getNetworkSize() { return &mNetworkSize; }
+    float* getRetrievalThreshold4() { return &mRetrievalThreshold4; }
+    int* getNetworkSize2() { return &mNetworkSize2; }
+    int* getNetworkSize3() { return &mNetworkSize3; }
     float* getMaxSaturation() { return &mMaxSaturation; }
     float* getMaxNoise() { return &mMaxNoise; }
 
@@ -68,9 +72,11 @@ private:
     char mNetworkSizes[256];
     int mNumTrials1; // for experiment 1
     int mNumTrials2; // for experiment 2
+    int mNumTrials3; // for experiment 3
     float mRetrievalThreshold1; // for experiment 1
-    float mRetrievalThreshold3; // for experiment 3
-    int mNetworkSize;
+    float mRetrievalThreshold4; // for experiment 4
+    int mNetworkSize2;
+    int mNetworkSize3;
     float mMaxSaturation;
     float mMaxNoise;
 };
