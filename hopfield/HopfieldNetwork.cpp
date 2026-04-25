@@ -8,7 +8,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 
-#include "helpers/file_helpers.hpp"
+#include "helpers/FileHelpers.hpp"
 
 using namespace Eigen;
 
@@ -155,8 +155,9 @@ void HopfieldNetwork::setWeightsFromMemories() {
 
     case STORKEY:
         for(const std::vector<int>& memory : mMemories) {
-            weights += storekeyWeight(memory);
+            weights += storkeyWeight(memory);
         }
+        break;
 
     default:
         std::cerr << "Error: Storage prescription has not been implemented";
@@ -168,7 +169,7 @@ void HopfieldNetwork::setWeightsFromMemories() {
     // std::cerr << mWeights[0];
 }
 
-MatrixXd HopfieldNetwork::storekeyWeight(const std::vector<int>& pattern) {
+MatrixXd HopfieldNetwork::storkeyWeight(const std::vector<int>& pattern) {
     VectorXd patternVector = VectorXi::Map(pattern.data(), mSize).cast<double>();
     
     // Define local field
@@ -183,7 +184,8 @@ MatrixXd HopfieldNetwork::storekeyWeight(const std::vector<int>& pattern) {
         }
     }
 
-    MatrixXd dW = (1.0 / mSize) * (patternVector * patternVector.transpose() - patternVector * h.transpose() - h * patternVector.transpose()); // Add special storekey stuff here
+    // Add special storkey stuff here
+    MatrixXd dW = (1.0 / mSize) * (patternVector * patternVector.transpose() - patternVector * h.transpose() - h * patternVector.transpose());
     dW.diagonal().setZero(); // Remove self-connections if they exist
     return dW;
 }
@@ -242,6 +244,34 @@ void HopfieldNetwork::infer(InferenceMode mode) {
             // TODO: implement sync update
             std::cerr << "Error: Sync update not implemented yet" << std::endl;
             break;
+    }
+}
+
+void HopfieldNetwork::inferUntilConvergence(InferenceMode mode, const int maxIterations) {
+    if (mode == SYNC) {
+        std::cerr << "Error: Sync update not supported yet in inferUntilConvergence" << std::endl;
+        return;
+    }
+
+    // Async: convergence is guaranteed to be stable
+    // Sync: convergence is guaranteed to be stable in a 2-cycle
+
+    std::vector<int> prev = mActivationMatrix;
+    std::vector<int> prev2 = prev;
+
+    for (int iter = 0; iter < maxIterations; ++iter) {
+        infer(mode);
+
+        if (mActivationMatrix == prev) {
+            return;
+        }
+
+        if (mode == SYNC && mActivationMatrix == prev2) {
+            return;
+        }
+
+        prev2 = prev;
+        prev = mActivationMatrix;
     }
 }
 

@@ -40,13 +40,32 @@ public:
 
     virtual void saveToFile(const std::string& filename) const = 0;
 
+    /**
+     * Perform a single entire network pass of inference
+     * @note No convergence checking included (since this is a single pass)
+     */
     virtual void infer(InferenceMode mode) = 0;
+    
+    /**
+     * Perform inference until convergence or max iterations reached
+     */
+    virtual void inferUntilConvergence(InferenceMode mode,const int maxIterations = 1000) = 0;
 
     virtual StoragePrescription getStoragePrescription() const = 0;
 
     virtual void setStoragePrescription(StoragePrescription sp) = 0;
 
+    /**
+     * Recalculate network weights using the stored memories and storage
+     * prescription.
+     */
     virtual void setWeightsFromMemories() = 0;
+
+    /**
+     * Calculate the energy of the current state of the network
+     * @return The energy of the network
+     */
+    virtual double getEnergy() const = 0;
 };
 
 #endif // IHOPFIELD_NETWORK

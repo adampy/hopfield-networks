@@ -4,8 +4,8 @@
 #include <iostream>
 #include <string>
 
-#include "helpers/file_helpers.hpp"
-#include "helpers/opengl_helpers.hpp"
+#include "helpers/FileHelpers.hpp"
+#include "helpers/OpenGLHelpers.hpp"
 
 HopfieldWidget::HopfieldWidget(IHopfieldNetwork& network, int x, int y, int width, int height)
     : mNetwork(network), mX(x), mY(y), mWidth(width), mHeight(height), mBaseWidth(width), mBaseHeight(height) {
@@ -61,7 +61,7 @@ bool HopfieldWidget::init_gl() {
     const std::string vsSrcStr = readTextFile("shaders/hopfield_widget.vert");
     const std::string fsSrcStr = readTextFile("shaders/hopfield_widget.frag");
     if (vsSrcStr.empty() || fsSrcStr.empty()) return false;
-    mProgram = create_program(vsSrcStr.c_str(), fsSrcStr.c_str());
+    mProgram = createProgram(vsSrcStr.c_str(), fsSrcStr.c_str());
     if (!mProgram) return false;
 
     // Define unit quad geometry

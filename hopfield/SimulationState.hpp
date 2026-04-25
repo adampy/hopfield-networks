@@ -21,8 +21,8 @@ public:
         mStoragePrescription(StoragePrescription::HEBBIAN), mNoiseLevel(0.0f),
         mWidgetScale(1.0f), mInfusionNoiseLevel(0.f), mNumTrials1(3),
         mNumTrials2(3), mNumTrials3(3), mRetrievalThreshold1(0.95),
-        mRetrievalThreshold4(0.95), mNetworkSize2(100), mNetworkSize3(100),
-        mMaxSaturation(0.1f), mMaxNoise(0.1f) {}
+        mNetworkSize2(100), mNetworkSize3(100), mMaxPatterns(10),
+        mMaxNoise(0.1f) {}
 
     std::vector<int> getParsedNetworkSizes() const;
 
@@ -48,10 +48,9 @@ public:
     int* getNumTrials2() { return &mNumTrials2; }
     int* getNumTrials3() { return &mNumTrials3; }
     float* getRetrievalThreshold1() { return &mRetrievalThreshold1; }
-    float* getRetrievalThreshold4() { return &mRetrievalThreshold4; }
     int* getNetworkSize2() { return &mNetworkSize2; }
     int* getNetworkSize3() { return &mNetworkSize3; }
-    float* getMaxSaturation() { return &mMaxSaturation; }
+    int* getMaxPatterns() { return &mMaxPatterns; }
     float* getMaxNoise() { return &mMaxNoise; }
 
 private:
@@ -74,10 +73,9 @@ private:
     int mNumTrials2; // for experiment 2
     int mNumTrials3; // for experiment 3
     float mRetrievalThreshold1; // for experiment 1
-    float mRetrievalThreshold4; // for experiment 4
     int mNetworkSize2;
     int mNetworkSize3;
-    float mMaxSaturation;
+    int mMaxPatterns;
     float mMaxNoise;
 };
 

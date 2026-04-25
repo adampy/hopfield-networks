@@ -39,7 +39,7 @@ static std::vector<std::string> getLinesFromFile(const char* path) {
     return lines;
 }
 
-/*
+/**
  * Helper function to write to a file
  */
 static void writeToFile(const char* text, const char* path) {
@@ -48,6 +48,18 @@ static void writeToFile(const char* text, const char* path) {
         return;
     }
     file << text;
+}
+
+/**
+ * Helper function to write a string to a file
+ */
+static bool writeTextFile(const std::string& text, const char* path) {
+    std::ofstream file(path, std::ios::out);
+    if (!file) {
+        return false;
+    }
+    file << text;
+    return true;
 }
 
 #endif // FILE_HELPERS

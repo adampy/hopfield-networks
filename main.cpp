@@ -117,10 +117,26 @@ int main() {
         ImGui::NewFrame();
 
         // Make window for experiment progress if an experiment is running
-        if (experiments.isExperiment1Running()) {
+        if (experiments.isRunning(Experiment::EXPERIMENT_1)) {
             ImGui::Begin("Experiment Progress", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::Text("Running Experiment 1...");
-            const float p = experiments.getExperiment1Progress();
+            const float p = experiments.getProgress(Experiment::EXPERIMENT_1);
+            ImGui::ProgressBar(p, ImVec2(300, 0));
+            ImGui::End();
+        }
+
+        if (experiments.isRunning(Experiment::EXPERIMENT_2)) {
+            ImGui::Begin("Experiment Progress", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text("Running Experiment 2...");
+            const float p = experiments.getProgress(Experiment::EXPERIMENT_2);
+            ImGui::ProgressBar(p, ImVec2(300, 0));
+            ImGui::End();
+        }
+
+        if (experiments.isRunning(Experiment::EXPERIMENT_3)) {
+            ImGui::Begin("Experiment Progress", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text("Running Experiment 3...");
+            const float p = experiments.getProgress(Experiment::EXPERIMENT_3);
             ImGui::ProgressBar(p, ImVec2(300, 0));
             ImGui::End();
         }
@@ -321,7 +337,7 @@ int main() {
             ImGui::InputText("Network Sizes (comma separated)", state.getNetworkSizes(), state.getNetworkSizesCapacity());
             ImGui::InputInt("Number of trials##exp1", state.getNumTrials1());
             ImGui::SliderFloat("Retrieval Success Threshold##exp1", state.getRetrievalThreshold1(), 0.0f, 1.0f);
-            const bool exp1IsRunning = experiments.isExperiment1Running();
+            const bool exp1IsRunning = experiments.isRunning(Experiment::EXPERIMENT_1);
             if (exp1IsRunning) {
                 ImGui::BeginDisabled();
             }
@@ -340,7 +356,7 @@ int main() {
             ImGui::InputInt("Network Size##exp2", state.getNetworkSize2());
             ImGui::InputInt("Number of trials##exp2", state.getNumTrials2());
             ImGui::SliderFloat("Retrieval Success Threshold##exp2", state.getRetrievalThreshold1(), 0.0f, 1.0f);
-            const bool exp2IsRunning = experiments.isExperiment2Running();
+            const bool exp2IsRunning = experiments.isRunning(Experiment::EXPERIMENT_2);
             if (exp2IsRunning) {
                 ImGui::BeginDisabled();
             }
@@ -356,35 +372,18 @@ int main() {
             ImGui::Text("3x Heatmaps of retrieval success vs saturation and noise level");
             ImGui::InputInt("Network Size##exp3", state.getNetworkSize3());
             ImGui::InputInt("Number of trials##exp", state.getNumTrials3());
-            ImGui::SliderFloat("Max Saturation", state.getMaxSaturation(), 0.0f, 1.0f);
+            ImGui::InputInt("Max Patterns", state.getMaxPatterns());
             ImGui::SliderFloat("Max Noise", state.getMaxNoise(), 0.0f, 1.0f);
-            const bool exp3IsRunning = experiments.isExperiment3Running();
+            const bool exp3IsRunning = experiments.isRunning(Experiment::EXPERIMENT_3);
             if (exp3IsRunning) {
                 ImGui::BeginDisabled();
             }
             if (ImGui::Button("Run Experiment 3")) {
                 const int size = *state.getNetworkSize3();
                 const int numTrials = *state.getNumTrials3();
-                const float maxSaturation = *state.getMaxSaturation();
-                const float maxNoise = *state.getMaxNoise();
-                experiments.startExperiment3(size, numTrials, maxSaturation, maxNoise, 0.01f, 0.01f);
+                experiments.startExperiment3(size, numTrials, *state.getMaxPatterns(), *state.getMaxNoise(), 0.01f);
             }
             if (exp3IsRunning) {
-                ImGui::EndDisabled();
-            }
-        }
-
-        if (ImGui::CollapsingHeader("Experiment 4")) {
-            ImGui::Text("Critical Noise (i.e. noise level where all patterns retrieved with given threshold) vs saturation");
-            ImGui::SliderFloat("Retrieval Success Threshold##exp4", state.getRetrievalThreshold4(), 0.0f, 1.0f);
-            const bool exp4IsRunning = experiments.isExperiment4Running();
-            if (exp4IsRunning) {
-                ImGui::BeginDisabled();
-            }
-            if (ImGui::Button("Run Experiment 4")) {
-                // TODO: Run experiment 4
-            }
-            if (exp4IsRunning) {
                 ImGui::EndDisabled();
             }
         }

@@ -55,7 +55,7 @@ public:
     
     const std::vector<std::vector<int>>& getMemories() const override { return mMemories; }
 
-    double getEnergy() const;
+    double getEnergy() const override;
     #pragma endregion
 
     #pragma region Change current state
@@ -65,22 +65,15 @@ public:
     const std::vector<int>& getActivations() const override { return mActivationMatrix; }
     void setActivations(const std::vector<int>& activations) override { mActivationMatrix = activations; }
     
-    /**
-     * The generic hopfield network interface entry point to perform a single entire
-     * network pass of inference
-     * @note No convergence checking included (since this is a single pass)
-     */
-    void infer(InferenceMode mode); // TODO: Remove old update method?
+    void infer(InferenceMode mode) override;
+    
+    void inferUntilConvergence(InferenceMode mode, const int maxIterations = 1000) override;
     
     StoragePrescription getStoragePrescription() const override { return mStoragePrescription; }
 
     void setStoragePrescription(StoragePrescription sp) override { mStoragePrescription = sp; }
 
-    /**
-     * Recalculate network weights using the stored memories and storage
-     * prescription.
-     */
-    void setWeightsFromMemories();
+    void setWeightsFromMemories() override;
 
     #pragma endregion
 
@@ -120,11 +113,11 @@ private:
 
     /**
      * Compute the incremental change to the weight matrix for a single pattern
-     * using the Storekey rule
+     * using the Storkey rule
      * @param pattern The pattern to compute the weight change for
      * @return The incremental weight change matrix
      */
-    Eigen::MatrixXd storekeyWeight(const std::vector<int>& pattern);
+    Eigen::MatrixXd storkeyWeight(const std::vector<int>& pattern);
 };
 
 #endif // HOPFIELD_NETWORK

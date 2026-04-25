@@ -46,8 +46,10 @@ add_executable(hopfield_networks
   experiment/ExperimentRunner.hpp
 
   # Helpers
-  helpers/file_helpers.hpp
-  helpers/opengl_helpers.hpp
+  helpers/FileHelpers.hpp
+  helpers/PatternUtils.cpp
+  helpers/PatternUtils.hpp
+  helpers/OpenGLHelpers.hpp
 
   # Hopfield
   hopfield/HopfieldNetwork.cpp

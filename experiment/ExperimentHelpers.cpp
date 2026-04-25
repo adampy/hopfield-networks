@@ -1,56 +1,66 @@
-#include "experiment/ExperimentHelpers.hpp"
-
-#include <random>
-#include <stdexcept>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
 #include <vector>
 
-std::vector<int> generateRandomPattern(const int size) {
-    std::vector<int> pattern(size);
-    std::random_device rd; // TODO: How to implement seeds?
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, 1);
-    for (int i = 0; i < size; i++) {
-        pattern[i] = dis(gen) * 2 - 1;
+#include "experiment/ExperimentHelpers.hpp"
+#include "helpers/FileHelpers.hpp"
+
+std::string buildRunId(const std::vector<std::string>& parts) {
+    std::ostringstream oss;
+    for (std::size_t i = 0; i < parts.size(); ++i) {
+        if (i > 0) {
+            oss << "_";
+        }
+        oss << parts[i];
     }
-    return pattern;
+    return oss.str();
 }
 
-std::vector<std::vector<int>> generateRandomPatterns(
-        const int numPatterns, const int patternSize) {
-    std::vector<std::vector<int>> patterns(numPatterns);
-    for (int i = 0; i < numPatterns; i++) {
-        patterns[i] = generateRandomPattern(patternSize);
-    }
-    return patterns;
+std::filesystem::path prepareExperimentOutputDir(Experiment exp,
+        const std::string& runId, std::error_code& fsErr) {
+    const std::filesystem::path baseOutputDir = std::filesystem::path("data") / getExperimentName(exp);
+    const std::filesystem::path outputDir = baseOutputDir / runId;
+    std::filesystem::create_directories(outputDir, fsErr);
+    return outputDir;
 }
 
-void infuseWithNoise(std::vector<int>& pattern,
-        const float noiseLevel) {
-    // Clamp noise between 0 and 1 inclusive
-    const float p = std::max(0.f, std::min(1.f, noiseLevel));
-    
-    // Infuse noise
-    std::random_device rd; // generates random seed
-    std::mt19937 rng(rd());
-    std::bernoulli_distribution flipDist(p);
-    for (int i = 0; i < pattern.size(); i++) {
-        if (flipDist(rng)) {
-            pattern[i] = -pattern[i];
+bool writeHeatmapCsv(const std::filesystem::path& outputDir, const bool useFallback,
+        const std::string& fileStem, const std::string& header, const int xCount,
+        const int yCount, const float yStep, const std::vector<std::vector<float>>& heatmap) {
+    std::filesystem::path outputPath = outputDir / (fileStem + ".csv");
+    if (useFallback) {
+        outputPath = std::filesystem::path(fileStem + ".csv");
+    }
+
+    std::ofstream outputFile(outputPath);
+    if (!outputFile.is_open()) {
+        return false;
+    }
+
+    outputFile << header << "\n";
+    for (int x = 1; x < xCount + 1; ++x) {
+        for (int y = 0; y < yCount; ++y) {
+            const float yValue = y * yStep;
+            outputFile << x << "," << yValue << "," << heatmap[x - 1][y] << "\n";
         }
     }
+    outputFile.close();
+    return true;
 }
 
-float computeOverlap(const std::vector<int>& pattern1,
-        const std::vector<int>& pattern2) {
-    if (pattern1.size() != pattern2.size()) {
-        throw std::invalid_argument("Patterns must be the same size");
+bool writeReadme(const std::filesystem::path& outputDir, const bool useFallback,
+        const std::string& fileName, const std::vector<std::string>& lines) {
+    std::filesystem::path readmePath = outputDir / fileName;
+    if (useFallback) {
+        readmePath = std::filesystem::path(fileName);
     }
-    
-    int overlapSum = 0;
-    for (int i = 0; i < pattern1.size(); i++) {
-        overlapSum += pattern1[i] * pattern2[i];
+
+    std::ostringstream oss;
+    for (const auto& line : lines) {
+        oss << line << "\n";
     }
-    
-    return static_cast<float>(overlapSum) / static_cast<float>(pattern1.size());
+
+    return writeTextFile(oss.str(), readmePath.string().c_str());
 }
 
