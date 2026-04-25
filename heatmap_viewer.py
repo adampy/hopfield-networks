@@ -138,11 +138,11 @@ def main() -> None:
     axes[0].set_ylabel("Saturation (alpha = P / N)")
 
     # shared colorbar for the three heatmaps
+    fig.subplots_adjust(left=0.08, right=0.88, bottom=0.14, top=0.90, wspace=0.25) # padding so colourbar doesnt overlap heatmaps
     if last_im is not None:
-        cbar = fig.colorbar(last_im, ax=axes, shrink=0.9)
+        cax = fig.add_axes([0.90, 0.14, 0.02, 0.76])
+        cbar = fig.colorbar(last_im, cax=cax)
         cbar.set_label("P(Retrieval Success)")
-
-    fig.tight_layout()
 
     # plot critical-noise curves on separate figure
     fig2, ax2 = plt.subplots(figsize=(7, 5), dpi=150)
