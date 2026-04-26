@@ -147,12 +147,12 @@ def main() -> None:
     # plot critical-noise curves on separate figure
     fig2, ax2 = plt.subplots(figsize=(7, 5), dpi=150)
     for name, alpha, qcrit in critical_curves:
-        ax2.plot(alpha, qcrit, linewidth=2, label=name)
+        ax2.plot(qcrit, alpha, linewidth=2, label=name)
 
-    ax2.set_xlabel("Saturation (alpha = P / N)")
-    ax2.set_ylabel("Critical Noise (q_crit)")
-    ax2.set_title(f"Critical Noise vs Saturation (theta_success={args.p_success:.2f}, N={network_size_n})")
-    ax2.set_ylim(0.0, 1.0)
+    ax2.set_xlabel("Critical Noise (q_crit)")
+    ax2.set_ylabel("Saturation (alpha = P / N)")
+    ax2.set_title(f"Saturation vs Critical Noise (theta_success={args.p_success:.2f}, N={network_size_n})")
+    ax2.set_xlim(0.0, 0.41)
     ax2.grid(True, alpha=0.3)
     ax2.legend()
 
