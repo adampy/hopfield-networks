@@ -69,7 +69,8 @@ def main() -> None:
     if len(pivots) == 1:
         axes = [axes]
 
-    # One critical curve per learning rule
+    # One curve per learning rule: for each noise level q, compute the maximum saturation
+    # where retrieval succeeds (>= threshold).
     critical_curves: list[tuple[str, list[float], list[float]]] = []
 
     last_im = None
@@ -110,19 +111,20 @@ def main() -> None:
             extent=extent,
         )
         ax.set_title(name)
-        ax.set_xlabel("Noise Level (q)")
+        ax.set_xlabel(r"Noise Level ($q$)")
 
-        # Finding critical noise - for each P (row) find largest q where P(retrieval) >= threshold
-        critical_noise: list[float] = []
-        for row in z:
-            mask = row >= args.p_success
+        # For each noise level q (column), take the set of saturations alpha where
+        # P(retrieval) >= threshold and keep the max.
+        max_alpha: list[float] = []
+        for col_idx in range(z.shape[1]):
+            mask = z[:, col_idx] >= args.p_success
             if not np.any(mask):
-                critical_noise.append(np.nan)
+                max_alpha.append(np.nan)
                 continue
-            last_idx = int(np.max(np.where(mask)))
-            critical_noise.append(x[last_idx])
+            vals = np.array(alpha_values)[mask]
+            max_alpha.append(float(np.max(vals)))
 
-        critical_curves.append((name, alpha_values, critical_noise))
+        critical_curves.append((name, x, max_alpha))
 
         # make x-axis labels readable (avoid too many ticks)
         if len(x) > 1:
@@ -135,7 +137,7 @@ def main() -> None:
             ax.set_yticks(yticks)
             ax.set_yticklabels([f"{t:.2f}" for t in yticks])
 
-    axes[0].set_ylabel("Saturation (alpha = P / N)")
+    axes[0].set_ylabel(r"Saturation ($\alpha = P / N$)")
 
     # shared colorbar for the three heatmaps
     fig.subplots_adjust(left=0.08, right=0.88, bottom=0.14, top=0.90, wspace=0.25) # padding so colourbar doesnt overlap heatmaps
@@ -146,13 +148,13 @@ def main() -> None:
 
     # plot critical-noise curves on separate figure
     fig2, ax2 = plt.subplots(figsize=(7, 5), dpi=150)
-    for name, alpha, qcrit in critical_curves:
-        ax2.plot(qcrit, alpha, linewidth=2, label=name)
+    for name, q, alpha_max in critical_curves:
+        ax2.plot(q, alpha_max, linewidth=2, label=name)
 
-    ax2.set_xlabel("Critical Noise (q_crit)")
-    ax2.set_ylabel("Saturation (alpha = P / N)")
-    ax2.set_title(f"Saturation vs Critical Noise (theta_success={args.p_success:.2f}, N={network_size_n})")
-    ax2.set_xlim(0.0, 0.41)
+    ax2.set_xlabel(r"Noise Level ($q$)")
+    ax2.set_ylabel(f"Max Saturation where P(success) >= {args.p_success:.2f}")
+    ax2.set_title(f"Max Saturation vs Noise")
+    # ax2.set_ylim(0.0, 1.0)
     ax2.grid(True, alpha=0.3)
     ax2.legend()
 

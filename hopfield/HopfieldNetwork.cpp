@@ -155,7 +155,7 @@ void HopfieldNetwork::setWeightsFromMemories() {
 
     case STORKEY:
         for(const std::vector<int>& memory : mMemories) {
-            weights += storkeyWeight(memory);
+            weights += storkeyWeight(memory, weights);
         }
         break;
 
@@ -169,7 +169,7 @@ void HopfieldNetwork::setWeightsFromMemories() {
     // std::cerr << mWeights[0];
 }
 
-MatrixXd HopfieldNetwork::storkeyWeight(const std::vector<int>& pattern) {
+MatrixXd HopfieldNetwork::storkeyWeight(const std::vector<int>& pattern, const MatrixXd& currentWeights) {
     VectorXd patternVector = VectorXi::Map(pattern.data(), mSize).cast<double>();
     
     // Define local field
@@ -179,7 +179,7 @@ MatrixXd HopfieldNetwork::storkeyWeight(const std::vector<int>& pattern) {
     for( int linearIndex = 0; linearIndex < mSize; linearIndex++) {
         for(int otherNodeIndex = 0; otherNodeIndex < mSize; otherNodeIndex++){
             if (linearIndex != otherNodeIndex) {
-                h(linearIndex) += patternVector(otherNodeIndex) * weightAt(linearIndex, otherNodeIndex);
+                h(linearIndex) += patternVector(otherNodeIndex) * currentWeights(linearIndex, otherNodeIndex);
             }
         }
     }

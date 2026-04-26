@@ -115,9 +115,11 @@ private:
      * Compute the incremental change to the weight matrix for a single pattern
      * using the Storkey rule
      * @param pattern The pattern to compute the weight change for
+     * @param currentWeights The current weight matrix
      * @return The incremental weight change matrix
      */
-    Eigen::MatrixXd storkeyWeight(const std::vector<int>& pattern);
+    Eigen::MatrixXd storkeyWeight(const std::vector<int>& pattern,
+                                  const Eigen::MatrixXd& currentWeights);
 };
 
 #endif // HOPFIELD_NETWORK
