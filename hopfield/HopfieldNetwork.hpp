@@ -39,6 +39,7 @@ public:
 
     int rows() const override { return mRows; }
     int cols() const override { return mCols; }
+    int size() const override { return mRows * mCols; }
 
     int getLinearIndex(int row, int col) const  { return row * mCols + col; }
     int getLinearIndex(int row1, int col1, int row2, int col2) const { return mSize * getLinearIndex(row1, col1) + getLinearIndex(row2, col2); }
@@ -56,6 +57,9 @@ public:
     const std::vector<std::vector<int>>& getMemories() const override { return mMemories; }
 
     double getEnergy() const override;
+
+    double getSaturation() const override;
+
     #pragma endregion
 
     #pragma region Change current state

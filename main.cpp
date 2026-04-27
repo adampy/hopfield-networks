@@ -188,6 +188,9 @@ int main() {
             if (state.getNetwork() == nullptr) {
                 ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "No network loaded");
             } else {
+                const double saturation = state.getNetwork()->getSaturation();
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f),
+                    (std::string("Saturation: ") + std::to_string(saturation)).c_str());
                 ImGui::Text("Manage stored memories and handle current activations. When deleting a memory, the network instantly re-learns.");
                 ImGui::Text("Set activations to memory...");
                 for (int i = 0; i < state.getNetwork()->getMemories().size(); ++i) {
@@ -250,7 +253,7 @@ int main() {
                 ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
                 if (ImGui::Button("Set Activations to Random Pattern")) {
-                    const int patternSize = state.getNetwork()->rows() * state.getNetwork()->cols(); // TODO: Rollup into single size method
+                    const int patternSize = state.getNetwork()->size();
                     auto pattern = generateRandomPattern(patternSize);
                     state.getNetwork()->setActivations(pattern);
                     if (state.getWidget() != nullptr) {
@@ -261,7 +264,7 @@ int main() {
                 ImGui::SameLine();
 
                 if (ImGui::Button("Clear Activations")) {
-                    const int patternSize = state.getNetwork()->rows() * state.getNetwork()->cols(); // TODO: Rollup into single size method
+                    const int patternSize = state.getNetwork()->size();
                     const std::vector<int> pattern(patternSize, 0);
                     state.getNetwork()->setActivations(pattern);
                     if (state.getWidget() != nullptr) {

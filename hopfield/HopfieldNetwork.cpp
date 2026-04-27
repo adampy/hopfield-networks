@@ -12,12 +12,13 @@
 
 using namespace Eigen;
 
-HopfieldNetwork::HopfieldNetwork(int rows, int cols, StoragePrescription sp)
-        : mRows(rows), mCols(cols), mSize(rows * cols),
-        mActivationMatrix(mSize, -1),  mWeights(mSize * mSize, 0) {
-    // empty constructor body
-
-    mStoragePrescription = sp; // TODO: should we have initialiser list if we have constructor body?
+HopfieldNetwork::HopfieldNetwork(int rows, int cols, StoragePrescription sp) {
+    mRows = rows;
+    mCols = cols;
+    mSize = rows * cols;
+    mActivationMatrix = std::vector<int>(mSize, -1);
+    mWeights = std::vector<double> (mSize * mSize, 0);
+    mStoragePrescription = sp;
 }
 
 
@@ -25,13 +26,12 @@ HopfieldNetwork::HopfieldNetwork(int rows, int cols, StoragePrescription sp,
         const std::vector<std::vector<int>>& memories) :  HopfieldNetwork(rows, cols, sp) {
     
     mMemories = memories;
-    mStoragePrescription = sp;
 
     setWeightsFromMemories();
 }
 
 HopfieldNetwork::HopfieldNetwork(const std::string& filename) : HopfieldNetwork(0, 0, HEBBIAN) {
-    // Example format: (rows, cols, data)
+    // Example format: (rows, cols, storage_prescription, data)
     // 4 4 0
     // + - + -
     // - + - +
@@ -137,7 +137,9 @@ MatrixXd HopfieldNetwork::createMemoryMatrix() {
     return result;
 }
 
-// TODO: add functions to update weights rather than needing to calculate from scratch
+// SFI: Could add incremental versions of weight updates.
+//      This is additional lift for not much computational
+//      benefit
 void HopfieldNetwork::setWeightsFromMemories() {
     MatrixXd memoriesMatrix = createMemoryMatrix();
     MatrixXd weights(mSize, mSize);
@@ -149,7 +151,7 @@ void HopfieldNetwork::setWeightsFromMemories() {
         weights = (1.0 / mSize) *  memoriesMatrix * memoriesMatrix.transpose();
         break;
     
-    case PSEUDO_INVERSE: // Think this needs to be recalculated in full for each  new memory
+    case PSEUDO_INVERSE:
         weights = (1.0 / mSize) *  memoriesMatrix * (memoriesMatrix.transpose() * memoriesMatrix).inverse() *  memoriesMatrix.transpose();
         break;
 
@@ -165,8 +167,6 @@ void HopfieldNetwork::setWeightsFromMemories() {
     }
 
     mWeights = std::vector<double>(weights.data(), weights.data() + weights.rows() * weights.cols());
-
-    // std::cerr << mWeights[0];
 }
 
 MatrixXd HopfieldNetwork::storkeyWeight(const std::vector<int>& pattern) {
@@ -198,7 +198,7 @@ int HopfieldNetwork::getSign(int linearIndex) {
         }
     }
 
-    return sum > 0 ? 1 : -1; // TODO: Should this be >= instead of > ?
+    return sum > 0 ? 1 : -1;
 }
 
 void HopfieldNetwork::updateNode(int linearIndex) {
@@ -285,4 +285,10 @@ double HopfieldNetwork::getEnergy() const {
         }
     }
     return energy;
+}
+
+double HopfieldNetwork::getSaturation() const {
+    const int p = mMemories.size();
+    const int n = mSize;
+    return (p / static_cast<double>(n));
 }

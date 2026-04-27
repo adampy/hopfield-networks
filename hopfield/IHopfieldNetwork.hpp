@@ -19,6 +19,7 @@ public:
 
     virtual int rows() const = 0;
     virtual int cols() const = 0;
+    virtual int size() const = 0;
 
     virtual int& at(int row, int col) = 0;
     virtual int at(int row, int col) const = 0;
@@ -66,6 +67,11 @@ public:
      * @return The energy of the network
      */
     virtual double getEnergy() const = 0;
+
+    /**
+     * Calculate network saturation
+     */
+    virtual double getSaturation() const = 0;
 };
 
 #endif // IHOPFIELD_NETWORK

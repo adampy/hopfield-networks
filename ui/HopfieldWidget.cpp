@@ -12,9 +12,10 @@ HopfieldWidget::HopfieldWidget(IHopfieldNetwork& network, int x, int y, int widt
     rebuild_instances();
 }
 
+
 void HopfieldWidget::rebuild_instances() {
     mRenderInstances.clear();
-    mRenderInstances.reserve(static_cast<size_t>(mNetwork.rows() * mNetwork.cols()));
+    mRenderInstances.reserve(static_cast<size_t>(mNetwork.size())); // NB: .size() = .rows() * .cols()
     for (int r = 0; r < mNetwork.rows(); ++r) {
         for (int c = 0; c < mNetwork.cols(); ++c) {
             const float state = (mNetwork.at(r, c) > 0) ? 1.0f : 0.0f;
@@ -189,7 +190,7 @@ void HopfieldWidget::draw(int fbWidth, int fbHeight) {
 
     // Draw indexed quad once per neuron using instancing
     glBindVertexArray(mVao);
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0, mNetwork.rows() * mNetwork.cols());
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0, mNetwork.size());
     glBindVertexArray(0);
 
     // Restore state
