@@ -54,7 +54,8 @@ public:
     void setProgress(Experiment exp, float progress);
 
     // Run experiments
-    void startExperiment1(const std::vector<int>& sizes, const int numTrials); // TODO: Maybe make a "startExperiment" function?
+    void startExperiment1(const std::vector<int>& size, const int numTrials); // TODO: Maybe make a "startExperiment" function?
+    void startExperiment2(const std::vector<int>& sizes, const int numTrials);
     void startExperiment3(const int size, const int numTrials,
         const int maxPatterns, const float maxNoise,
         const float noiseRes = 0.01);

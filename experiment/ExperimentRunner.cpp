@@ -75,7 +75,7 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
     setRunning(Experiment::EXPERIMENT_1, true);
     setProgress(Experiment::EXPERIMENT_1, 0.0f);
 
-    mExp1Worker = std::thread([&sizes, numTrials, this]() {
+    mExp1Worker = std::thread([sizes, numTrials, this]() {
         const std::size_t numNetworkSizes = sizes.size();
         if (numNetworkSizes == 0) {
             setProgress(Experiment::EXPERIMENT_1, 1.0f);
@@ -85,14 +85,33 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
 
         // EXPERIMENT GOES HERE
         const std::vector<StoragePrescription> storagePrescriptions = {HEBBIAN, PSEUDO_INVERSE, STORKEY};
-        
+
+        std::ostringstream thetaStr;
+        thetaStr << std::fixed << std::setprecision(2) << 0.95;
+
+        const std::string runId = buildRunId({
+            "Exp1",
+            "Sizes" + std::to_string(sizes.size()),
+            "Trials" + std::to_string(numTrials),
+            "Theta" + thetaStr.str()
+        });
+
+        std::error_code fsErr;
+        const std::filesystem::path outputDir = prepareExperimentOutputDir(
+            Experiment::EXPERIMENT_1, runId, fsErr);
+
+        const bool useFallback = static_cast<bool>(fsErr);
+
         // These are used to track crude progress percentage
         const int numSubExperiments = numNetworkSizes * storagePrescriptions.size();
         int subExperimentIndex = 0;
         
         // for each storage prescription
-        for (int spIndex = 0; spIndex < storagePrescriptions.size(); ++spIndex) {
+        for (int spIndex = 0; spIndex < storagePrescriptions.size(); ++spIndex) { /// 
             const StoragePrescription storagePrescription = storagePrescriptions[spIndex];
+
+            std::vector<std::tuple<int, int, double>> results; 
+            // (networkSize, P_c, alpha_c)
 
             // for each network size
             for (std::size_t i = 0; i < numNetworkSizes; ++i) {
@@ -103,11 +122,8 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
                 setProgress(Experiment::EXPERIMENT_1,
                     static_cast<double>(subExperimentIndex) / static_cast<double>(numSubExperiments));
 
-                // std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-                
                 double meanSuccessRate = 0.0;
-
+                const int maxP = networkSize;
                 int p = 0; // number of patterns to try store in network
                 std::vector<double> successRates; // stores success rate for current p for each trial
                 do {
@@ -119,43 +135,82 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
 
                         // train a hopfield network using patterns
                         HopfieldNetwork network(rows, cols, storagePrescription, patterns);
-                        
-                        // iterate throuh all patterns then remove them
 
-                            // infuse pattern with noise (make noise a function argument with default 10% or 20%)
+                        int successCount = 0;
 
-                            // use the hopfield network to try to get them back
-                            //     (need to implement convergence detection - see report at end of 2.2.1 Asynchronous)
-                            // 
-                            //     code will look something like
-                            //
-                            //     std::vector<int> noisyPattern = pattern;
-                            //     infuseWithNoise(noisyPattern, 0.1f);
-                            //     network.setActivations(noisyPattern);
-                            //     network.inferUntilConvergence(InferenceMode::ASYNC_SEQUENTIAL); // OR ASYNC_RANDOM - it doesn't really matter
-                            //     check overlap using network
-                            //         computeOverlap(pattern, network.getActivations())
-                            
-                            // check if it is successful or not (i.e. overlap >= 0.95)
+                        for (const auto& pattern : patterns) {
+                            std::vector<int> noisyPattern = pattern;
 
-                                // if so add to successCount
-                        
-                        // add successCount/P to successRates
+                            // 10 percent noise
+                            infuseWithNoise(noisyPattern, 0.1f);
+                            network.setActivations(noisyPattern);
 
+                            network.inferUntilConvergence(InferenceMode::ASYNC_RANDOM);
+
+                            const std::vector<int> recalled = network.getActivations();
+
+                            double overlap = computeOverlap(pattern, recalled);
+
+                            // succeeded?
+                            if (overlap >= 0.95) {
+                                successCount++;
+                            }
+                        }
+
+                        // need to work out the success rate
+                        double successRate = static_cast<double>(successCount) / static_cast<double>(p); // remember p is the number of networks
+                        successRates.push_back(successRate);
                     }
+
+                    meanSuccessRate = 0.0;
+                    for (double r : successRates) {
+                        meanSuccessRate += r;
+                    }
+
+                    meanSuccessRate /= static_cast<double>(successRates.size());
                     // calculate meanSuccessRate from successRates
 
-                } while (meanSuccessRate >= 0.95); // TODO: Make 0.95 a function argument
+                } while (meanSuccessRate >= 0.95 && p < maxP); // TODO: Make 0.95 a function argument
 
                 // max storeable patterns (P_c) is p-1
+                int P_c = p -1;
 
                 // critical storage capacity (alpha_c) is P_c / N
+                double alpha_c = static_cast<double>(P_c) / static_cast<double>(networkSize);
 
                 // store all alpha_c's then graph later
+                results.emplace_back(networkSize, P_c, alpha_c);
 
                 subExperimentIndex++; // used to track progress
             }
+
+            writeCapacityCsv(
+                outputDir,
+                useFallback,
+                storagePrescriptionToString(storagePrescription) + "_capacity",
+                "networkSize,P_c,alpha_c",
+                results
+            );
+        
         }
+        
+
+        const std::string readmeName = useFallback ? "experiment1_README.md" : "README.md";
+
+        writeReadme(
+            outputDir,
+            useFallback,
+            readmeName,
+            {
+                "### Inputs",
+                "- Network sizes: vector<int> (count = " + std::to_string(sizes.size()) + ")",
+                "- numTrials: " + std::to_string(numTrials),
+                "- success threshold (theta): 0.95",
+                "",
+                "### Output",
+                "- One CSV per storage rule",
+                "- Columns: networkSize, P_c, alpha_c"
+            });
 
         // END OF EXPERIMENT
 
@@ -163,6 +218,137 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
         setRunning(Experiment::EXPERIMENT_1, false);
     });
 }
+
+void ExperimentRunner::startExperiment2(const std::vector<int>& sizes, const int numTrials) {
+    if (isRunning(Experiment::EXPERIMENT_2)) {
+        return;
+    }
+
+    join();
+
+    setRunning(Experiment::EXPERIMENT_2, true);
+    setProgress(Experiment::EXPERIMENT_2, 0.0f);
+
+    mExp2Worker = std::thread([sizes, numTrials, this]() {
+        
+        const std::vector<StoragePrescription> storagePrescriptions = {HEBBIAN, PSEUDO_INVERSE, STORKEY};
+
+        std::ostringstream thetaStr;
+        thetaStr << std::fixed << std::setprecision(2) << 0.95;
+
+        const std::string runId = buildRunId({
+            "Exp2",
+            "Sizes" + std::to_string(sizes.size()),
+            "Trials" + std::to_string(numTrials),
+            "Theta" + thetaStr.str()
+        });
+
+        std::error_code fsErr;
+        const std::filesystem::path outputDir = prepareExperimentOutputDir(
+            Experiment::EXPERIMENT_2, runId, fsErr);
+
+        const bool useFallback = static_cast<bool>(fsErr);
+
+        const double noiseLevel = 0.1f;
+        const double successThreshold = 0.95f;
+
+        const std::size_t numNetworkSizes = sizes.size();
+        const int numSubExperiments = numNetworkSizes * storagePrescriptions.size();
+        int subExperimentIndex = 0;
+
+        for (const auto& storagePrescription: storagePrescriptions) {
+
+            for (std::size_t i = 0; i < numNetworkSizes; ++i) {
+
+                const int N = sizes[i];
+
+                std::vector<std::tuple<int, double, double>> curve;
+
+                std::cout << "Running Experiment 2 network size: " << N << std::endl;
+
+                setProgress(Experiment::EXPERIMENT_2, static_cast<double>(subExperimentIndex) / numSubExperiments);
+
+                const int maxP = N;
+
+                for (int p = 1; p <= maxP; ++p) {
+                    std::vector<double> trialRates; // use it for working out success rate
+                    const auto allPatterns = generateRandomPatterns(maxP, N);
+
+                    for (int trial = 0; trial < numTrials; ++trial) {
+
+                        std::vector<std::vector<int>> patterns(
+                            allPatterns.begin(),
+                            allPatterns.begin() + p
+                        );
+
+                        HopfieldNetwork network(1, N, storagePrescription, patterns);
+
+                        int successCount = 0;
+
+                        for (const auto& pattern : patterns) {
+                            std::vector<int> noisy = pattern;
+
+                            infuseWithNoise(noisy, noiseLevel);
+
+                            network.setActivations(noisy);
+                            network.inferUntilConvergence(InferenceMode::ASYNC_RANDOM);
+
+                            double overlap = computeOverlap(pattern, network.getActivations());
+
+                            if (overlap >= successThreshold) {
+                                successCount++;
+                            }
+
+                        }
+
+                        double successRate = static_cast<double>(successCount) / p;
+                        trialRates.push_back(successRate);
+                    }
+
+                    double meanRate = 0.0;
+                    for (double r : trialRates) meanRate += r;
+                    meanRate /= trialRates.size();
+
+                    double alpha = static_cast<double>(p) / static_cast<double>(N);
+
+                    curve.emplace_back(p, alpha, meanRate);
+                }
+
+                writeCurveCsv(
+                    outputDir,
+                    useFallback,
+                    storagePrescriptionToString(storagePrescription) + "_curve",
+                    "p,alpha,P_success",
+                    curve
+                );
+
+                subExperimentIndex++;
+            }
+        }
+
+        const std::string readmeName = useFallback ? "experiment2_README.md" : "README.md";
+
+        writeReadme(
+            outputDir,
+            useFallback,
+            readmeName,
+            {
+                "### Inputs",
+                "- Network sizes: vector<int> (count = " + std::to_string(sizes.size()) + ")",
+                "- numTrials: " + std::to_string(numTrials),
+                "- success threshold (theta): 0.95",
+                "- noiseLevel: 0.10",
+                "",
+                "### Output",
+                "- One CSV per storage rule",
+                "- Columns: p, alpha, p_success"
+            });
+
+        setProgress(Experiment::EXPERIMENT_2, 1.0f);
+        setRunning(Experiment::EXPERIMENT_2, false);
+        
+    } ); // thread ends here
+} 
 
 void ExperimentRunner::startExperiment3(const int size, const int numTrials,
         const int maxPatterns, const float maxNoise,

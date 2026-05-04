@@ -64,3 +64,56 @@ bool writeReadme(const std::filesystem::path& outputDir, const bool useFallback,
     return writeTextFile(oss.str(), readmePath.string().c_str());
 }
 
+bool writeCapacityCsv(const std::filesystem::path& outputDir,
+                     const bool useFallback,
+                     const std::string& fileStem,
+                     const std::string& header,
+                     const std::vector<std::tuple<int, int, double>>& data)
+{
+    std::filesystem::path outputPath = outputDir / (fileStem + ".csv");
+    if (useFallback) {
+        outputPath = std::filesystem::path(fileStem + ".csv");
+    }
+
+    std::ofstream outputFile(outputPath);
+    if (!outputFile.is_open()) {
+        return false;
+    }
+
+    outputFile << header << "\n";
+
+    for (const auto& [networkSize, Pc, alpha] : data) {
+        outputFile << networkSize << "," << Pc << "," << alpha << "\n";
+    }
+
+    outputFile.close();
+    return true;
+}
+
+bool writeCurveCsv(const std::filesystem::path& outputDir,
+                   const bool useFallback,
+                   const std::string& fileStem,
+                   const std::string& header,
+                   const std::vector<std::tuple<int, double, double>>& data)
+// (p, alpha, successRate)
+{
+    std::filesystem::path outputPath = outputDir / (fileStem + ".csv");
+    if (useFallback) {
+        outputPath = std::filesystem::path(fileStem + ".csv");
+    }
+
+    std::ofstream outputFile(outputPath);
+    if (!outputFile.is_open()) {
+        return false;
+    }
+
+    outputFile << header << "\n";
+
+    for (const auto& [p, alpha, success] : data) {
+        outputFile << p << "," << alpha << "," << success << "\n";
+    }
+
+    outputFile.close();
+    return true;
+}
+

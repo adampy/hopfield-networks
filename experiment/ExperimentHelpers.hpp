@@ -41,4 +41,16 @@ extern bool writeHeatmapCsv(const std::filesystem::path& outputDir,
     const int xCount, const int yCount, const float yStep,
     const std::vector<std::vector<float>>& heatmap);
 
+extern bool writeCapacityCsv(const std::filesystem::path& outputDir,
+                     const bool useFallback,
+                     const std::string& fileStem,
+                     const std::string& header,
+                     const std::vector<std::tuple<int, int, double>>& data);
+
+extern bool writeCurveCsv(const std::filesystem::path& outputDir,
+                   const bool useFallback,
+                   const std::string& fileStem,
+                   const std::string& header,
+                   const std::vector<std::tuple<int, double, double>>& data);
+
 #endif // EXPERIMENT_HELPERS
