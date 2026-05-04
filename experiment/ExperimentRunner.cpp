@@ -65,7 +65,7 @@ void ExperimentRunner::setProgress(Experiment exp, float progress) {
 }
 
 
-void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int numTrials) {
+void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int numTrials, const float theta) {
     if (isRunning(Experiment::EXPERIMENT_1)) {
         return;
     }
@@ -75,7 +75,7 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
     setRunning(Experiment::EXPERIMENT_1, true);
     setProgress(Experiment::EXPERIMENT_1, 0.0f);
 
-    mExp1Worker = std::thread([sizes, numTrials, this]() {
+    mExp1Worker = std::thread([sizes, numTrials, theta, this]() {
         const std::size_t numNetworkSizes = sizes.size();
         if (numNetworkSizes == 0) {
             setProgress(Experiment::EXPERIMENT_1, 1.0f);
@@ -87,7 +87,7 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
         const std::vector<StoragePrescription> storagePrescriptions = {HEBBIAN, PSEUDO_INVERSE, STORKEY};
 
         std::ostringstream thetaStr;
-        thetaStr << std::fixed << std::setprecision(2) << 0.95;
+        thetaStr << std::fixed << std::setprecision(2) << theta;
 
         const std::string runId = buildRunId({
             "Exp1",
@@ -101,6 +101,8 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
             Experiment::EXPERIMENT_1, runId, fsErr);
 
         const bool useFallback = static_cast<bool>(fsErr);
+
+        const double noiseLevel = 0.05f; // 5% noise
 
         // These are used to track crude progress percentage
         const int numSubExperiments = numNetworkSizes * storagePrescriptions.size();
@@ -116,8 +118,6 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
             // for each network size
             for (std::size_t i = 0; i < numNetworkSizes; ++i) {
                 const int networkSize = sizes[i];
-                const int rows = networkSize / 2;
-                const int cols = networkSize / 2;
                 std::cout << "Running experiment for network size: " << networkSize << std::endl;
                 setProgress(Experiment::EXPERIMENT_1,
                     static_cast<double>(subExperimentIndex) / static_cast<double>(numSubExperiments));
@@ -134,25 +134,24 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
                         const std::vector<std::vector<int>> patterns = generateRandomPatterns(p, networkSize);
 
                         // train a hopfield network using patterns
-                        HopfieldNetwork network(rows, cols, storagePrescription, patterns);
+                        HopfieldNetwork network(1, networkSize, storagePrescription, patterns);
 
                         int successCount = 0;
 
                         for (const auto& pattern : patterns) {
                             std::vector<int> noisyPattern = pattern;
 
-                            // 10 percent noise
-                            infuseWithNoise(noisyPattern, 0.1f);
+                            infuseWithNoise(noisyPattern, noiseLevel);
                             network.setActivations(noisyPattern);
 
-                            network.inferUntilConvergence(InferenceMode::ASYNC_RANDOM);
+                            network.inferUntilConvergence(InferenceMode::ASYNC_RANDOM, 100);
 
                             const std::vector<int> recalled = network.getActivations();
 
                             double overlap = computeOverlap(pattern, recalled);
 
                             // succeeded?
-                            if (overlap >= 0.95) {
+                            if (overlap >= 0.95f) {
                                 successCount++;
                             }
                         }
@@ -170,10 +169,10 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
                     meanSuccessRate /= static_cast<double>(successRates.size());
                     // calculate meanSuccessRate from successRates
 
-                } while (meanSuccessRate >= 0.95 && p < maxP); // TODO: Make 0.95 a function argument
+                } while (meanSuccessRate >= theta && p < maxP);
 
                 // max storeable patterns (P_c) is p-1
-                int P_c = p -1;
+                int P_c = p - 1;
 
                 // critical storage capacity (alpha_c) is P_c / N
                 double alpha_c = static_cast<double>(P_c) / static_cast<double>(networkSize);
@@ -205,7 +204,8 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
                 "### Inputs",
                 "- Network sizes: vector<int> (count = " + std::to_string(sizes.size()) + ")",
                 "- numTrials: " + std::to_string(numTrials),
-                "- success threshold (theta): 0.95",
+                "- success threshold (theta): " + std::to_string(theta),
+                "- noiseLevel: " + std::to_string(noiseLevel),
                 "",
                 "### Output",
                 "- One CSV per storage rule",
@@ -219,7 +219,7 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
     });
 }
 
-void ExperimentRunner::startExperiment2(const std::vector<int>& sizes, const int numTrials) {
+void ExperimentRunner::startExperiment2(const int size, const int numTrials) {
     if (isRunning(Experiment::EXPERIMENT_2)) {
         return;
     }
@@ -229,7 +229,7 @@ void ExperimentRunner::startExperiment2(const std::vector<int>& sizes, const int
     setRunning(Experiment::EXPERIMENT_2, true);
     setProgress(Experiment::EXPERIMENT_2, 0.0f);
 
-    mExp2Worker = std::thread([sizes, numTrials, this]() {
+    mExp2Worker = std::thread([size, numTrials, this]() {
         
         const std::vector<StoragePrescription> storagePrescriptions = {HEBBIAN, PSEUDO_INVERSE, STORKEY};
 
@@ -238,7 +238,7 @@ void ExperimentRunner::startExperiment2(const std::vector<int>& sizes, const int
 
         const std::string runId = buildRunId({
             "Exp2",
-            "Sizes" + std::to_string(sizes.size()),
+            "N" + std::to_string(size),
             "Trials" + std::to_string(numTrials),
             "Theta" + thetaStr.str()
         });
@@ -252,78 +252,66 @@ void ExperimentRunner::startExperiment2(const std::vector<int>& sizes, const int
         const double noiseLevel = 0.1f;
         const double successThreshold = 0.95f;
 
-        const std::size_t numNetworkSizes = sizes.size();
-        const int numSubExperiments = numNetworkSizes * storagePrescriptions.size();
-        int subExperimentIndex = 0;
-
         for (const auto& storagePrescription: storagePrescriptions) {
+            const int N = size;
 
-            for (std::size_t i = 0; i < numNetworkSizes; ++i) {
+            std::vector<std::tuple<int, double, double>> curve;
 
-                const int N = sizes[i];
+            std::cout << "Running Experiment 2 network size: " << N << std::endl;
 
-                std::vector<std::tuple<int, double, double>> curve;
+            const int maxP = N;
 
-                std::cout << "Running Experiment 2 network size: " << N << std::endl;
+            for (int p = 1; p <= maxP; ++p) {
+                std::vector<double> trialRates; // use it for working out success rate
+                const auto allPatterns = generateRandomPatterns(maxP, N);
 
-                setProgress(Experiment::EXPERIMENT_2, static_cast<double>(subExperimentIndex) / numSubExperiments);
+                for (int trial = 0; trial < numTrials; ++trial) {
 
-                const int maxP = N;
+                    std::vector<std::vector<int>> patterns(
+                        allPatterns.begin(),
+                        allPatterns.begin() + p
+                    );
 
-                for (int p = 1; p <= maxP; ++p) {
-                    std::vector<double> trialRates; // use it for working out success rate
-                    const auto allPatterns = generateRandomPatterns(maxP, N);
+                    HopfieldNetwork network(1, N, storagePrescription, patterns);
 
-                    for (int trial = 0; trial < numTrials; ++trial) {
+                    int successCount = 0;
 
-                        std::vector<std::vector<int>> patterns(
-                            allPatterns.begin(),
-                            allPatterns.begin() + p
-                        );
+                    for (const auto& pattern : patterns) {
+                        std::vector<int> noisy = pattern;
 
-                        HopfieldNetwork network(1, N, storagePrescription, patterns);
+                        infuseWithNoise(noisy, noiseLevel);
 
-                        int successCount = 0;
+                        network.setActivations(noisy);
+                        network.inferUntilConvergence(InferenceMode::ASYNC_RANDOM, 100);
 
-                        for (const auto& pattern : patterns) {
-                            std::vector<int> noisy = pattern;
+                        double overlap = computeOverlap(pattern, network.getActivations());
 
-                            infuseWithNoise(noisy, noiseLevel);
-
-                            network.setActivations(noisy);
-                            network.inferUntilConvergence(InferenceMode::ASYNC_RANDOM);
-
-                            double overlap = computeOverlap(pattern, network.getActivations());
-
-                            if (overlap >= successThreshold) {
-                                successCount++;
-                            }
-
+                        if (overlap >= successThreshold) {
+                            successCount++;
                         }
 
-                        double successRate = static_cast<double>(successCount) / p;
-                        trialRates.push_back(successRate);
                     }
 
-                    double meanRate = 0.0;
-                    for (double r : trialRates) meanRate += r;
-                    meanRate /= trialRates.size();
-
-                    double alpha = static_cast<double>(p) / static_cast<double>(N);
-
-                    curve.emplace_back(p, alpha, meanRate);
+                    double successRate = static_cast<double>(successCount) / p;
+                    trialRates.push_back(successRate);
                 }
 
-                writeCurveCsv(
-                    outputDir,
-                    useFallback,
-                    storagePrescriptionToString(storagePrescription) + "_curve",
-                    "p,alpha,P_success",
-                    curve
-                );
+                double meanRate = 0.0;
+                for (double r : trialRates) meanRate += r;
+                meanRate /= trialRates.size();
 
-                subExperimentIndex++;
+                double alpha = static_cast<double>(p) / static_cast<double>(N);
+
+                curve.emplace_back(p, alpha, meanRate);
             }
+
+            writeCurveCsv(
+                outputDir,
+                useFallback,
+                storagePrescriptionToString(storagePrescription) + "_curve",
+                "p,alpha,P_success",
+                curve
+            );
         }
 
         const std::string readmeName = useFallback ? "experiment2_README.md" : "README.md";
@@ -334,10 +322,10 @@ void ExperimentRunner::startExperiment2(const std::vector<int>& sizes, const int
             readmeName,
             {
                 "### Inputs",
-                "- Network sizes: vector<int> (count = " + std::to_string(sizes.size()) + ")",
+                "- Network size (N): " + std::to_string(size),
                 "- numTrials: " + std::to_string(numTrials),
                 "- success threshold (theta): 0.95",
-                "- noiseLevel: 0.10",
+                "- noiseLevel: " + std::to_string(noiseLevel),
                 "",
                 "### Output",
                 "- One CSV per storage rule",

@@ -336,7 +336,7 @@ int main() {
             ImGui::Text("Estimating critical capacity vs network size");
             ImGui::InputText("Network Sizes (comma separated)", state.getNetworkSizes(), state.getNetworkSizesCapacity());
             ImGui::InputInt("Number of trials##exp1", state.getNumTrials1());
-            ImGui::SliderFloat("Retrieval Success Threshold##exp1", state.getRetrievalThreshold1(), 0.0f, 1.0f);
+            ImGui::InputFloat("Retrieval Success Threshold##exp1", state.getRetrievalThreshold1(), 0.0f, 1.0f);
             const bool exp1IsRunning = experiments.isRunning(Experiment::EXPERIMENT_1);
             if (exp1IsRunning) {
                 ImGui::BeginDisabled();
@@ -344,7 +344,8 @@ int main() {
             if (ImGui::Button("Run Experiment 1")) {
                 const auto sizes = state.getParsedNetworkSizes();
                 const int numTrials = *state.getNumTrials1();
-                experiments.startExperiment1(sizes, numTrials);
+                const float theta = *state.getRetrievalThreshold1();
+                experiments.startExperiment1(sizes, numTrials, theta);
             }
             if (exp1IsRunning) {
                 ImGui::EndDisabled();
@@ -355,15 +356,14 @@ int main() {
             ImGui::Text("Retrieval success vs Load");
             ImGui::InputInt("Network Size##exp2", state.getNetworkSize2());
             ImGui::InputInt("Number of trials##exp2", state.getNumTrials2());
-            ImGui::SliderFloat("Retrieval Success Threshold##exp2", state.getRetrievalThreshold1(), 0.0f, 1.0f);
             const bool exp2IsRunning = experiments.isRunning(Experiment::EXPERIMENT_2);
             if (exp2IsRunning) {
                 ImGui::BeginDisabled();
             }
             if (ImGui::Button("Run Experiment 2")) {
-                const auto sizes = state.getParsedNetworkSizes();
+                const int size = *state.getNetworkSize2();
                 const int numTrials = *state.getNumTrials2();
-                experiments.startExperiment2(sizes, numTrials);
+                experiments.startExperiment2(size, numTrials);
             }
             if (exp2IsRunning) {
                 ImGui::EndDisabled();
