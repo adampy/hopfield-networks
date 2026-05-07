@@ -31,6 +31,8 @@ General workflow:
 - Use **Inference** to test recall (optionally infuse noise first) by running inference passes of different types.
 - Use **Experiments** to generate CSV outputs under `data/experiment*/...`. While an experiment is running, a separate `Experiment Progress` window shows a progress bar and the controls are disabled.
 
+In the visualisation, left clicking sets activations to 1, and right clicking sets them to 0.
+
 ### `state.hpf`
 This file persists a network and its memories for later experimentation.
 - `Load from state.hpf` loads a previously saved network state from the working directory.
