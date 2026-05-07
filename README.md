@@ -1,4 +1,10 @@
-# Hopfield Networks
+# Evaluation of Storage Prescriptions in Hopfield Networks
+A C++ application for visualising and experimenting with Hopfield networks, built using GLFW and OpenGL.
+
+## Authors
+- Adam Crawley (201490505)
+- William Kingdon (201501499)
+- Rahim Karim (201519128)
 
 ## Installation
 Tested on WSL2 (running Ubuntu 24.04 LTS)
@@ -14,6 +20,14 @@ When running through WSL terminal, the `$DISPLAY` env var should be set and wind
 chmod +x build_and_run.sh
 ./build_and_run.sh
 ```
+
+## Debugging
+If running through VSCode, the automatic build system may cause the solution not to run and give an error such as
+```
+CMake Error: Error: generator : Ninja
+Does not match the generator used previously: Unix Makefiles
+```
+If this is the case, `rm build -rf`, and rerun the build script.
 
 ## Development
 For new files (`.cpp` always, `.hpp` is not *required* but encouraged), make sure to put them in the `CMakeLists.txt` under `add_executable(hopfield_networks ...`
