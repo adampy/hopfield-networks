@@ -21,6 +21,23 @@ chmod +x build_and_run.sh
 ./build_and_run.sh
 ```
 
+## Usage
+General workflow:
+- Start by creating a network in **Network** (set `Rows`/`Columns`, then `Create Network`)
+- If necessary, use **Display** to change visual scale.
+- Add memories in **Activations / Memories** using `Save Activations as New Memory (and relearn)`
+- Stored memories, and current overlaps, can be viewed in the **Activations / Memories** panel.
+- Use **Learning** to switch storage prescriptions.
+- Use **Inference** to test recall (optionally infuse noise first) by running inference passes of different types.
+- Use **Experiments** to generate CSV outputs under `data/experiment*/...`. While an experiment is running, a separate `Experiment Progress` window shows a progress bar and the controls are disabled.
+
+### `state.hpf`
+This file persists a network and its memories for later experimentation.
+- `Load from state.hpf` loads a previously saved network state from the working directory.
+- `Save to state.hpf` overwrites the current `state.hpf` with the current network size, prescription, and memories.
+- A typical workflow is:
+  Create a network -> add memories -> save to `state.hpf` -> later reload and continue experimenting.
+
 ## Debugging
 If running through VSCode, the automatic build system may cause the solution not to run and give an error such as
 ```
