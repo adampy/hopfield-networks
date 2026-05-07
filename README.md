@@ -8,11 +8,6 @@ Install required graphics libs
 sudo apt-get update && sudo apt-get install -y libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
 ```
 
-Install required linear matrix implementation
-```bash
-sudo apt-get install -y libeigen3-dev
-```
-
 ## Run
 When running through WSL terminal, the `$DISPLAY` env var should be set and windows will be forwarded into Windows using X11.
 ```bash

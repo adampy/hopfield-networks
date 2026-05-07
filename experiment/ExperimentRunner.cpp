@@ -102,7 +102,7 @@ void ExperimentRunner::startExperiment1(const std::vector<int>& sizes, const int
 
         const bool useFallback = static_cast<bool>(fsErr);
 
-        const double noiseLevel = 0.05f; // 5% noise
+        const double noiseLevel = 0.f; //0.05f; // 5% noise
 
         // These are used to track crude progress percentage
         const int numSubExperiments = numNetworkSizes * storagePrescriptions.size();
