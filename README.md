@@ -44,3 +44,8 @@ To visualise experiments:
 - Experiment 2: `python experiment2_viewer.py <FOLDER>`
 - Experiment 3: `python heatmap_viewer.py data/experiment3/<RUN_DIR>`
 Additional arguments can be supplied for formatting purposes.
+
+## References
+ImGUI for visualisation of settings: https://github.com/ocornut/imgui
+Eigen for matrix operations: https://libeigen.gitlab.io/
+OpenGL / GLFW for rendering: https://www.opengl.org/
